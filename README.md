@@ -17,10 +17,10 @@ This repository demonstrates a quantitative comparison between classic biophysic
 
 ## **Key improvements & validation metrics**
 
-– **`Biophysical grounding`:**
-– **`AP width / τ_d = 1.5ms`:** Matches mammalian experimental data.
-– **`Temp scaling (Q10=3)`:** Standard for ion channel kinetics.
-– **`Noise term`:** Realistic Johnson–Nyquist noise, scales with √T.
+- **Biophysical grounding:**
+- **AP width / τ_d = 1.5ms:** Matches mammalian experimental data.
+- **Temp scaling (Q10=3):** Standard for ion channel kinetics.
+- **Noise term:** Realistic Johnson–Nyquist noise, scales with √T.
 
 **TDC parameter mapping:**
 | parameter | meaning                                                      | example value   |
@@ -108,9 +108,9 @@ Saved figures: tdc_vs_hh_high_temp_YYYYMMDD_HHMMSS.pdf, tdc_vs_hh_high_temp_YYYY
 
 ## **Customization/extension**
 
-  – `Adjust` parameters in `tdc_biohybrid` or initial conditions to test new regimes;
-  – `Adapt` for long-chain or extended sensor/junction scenarios to mirror realistic bioelectronic hybrid devices;
-  – `SNR`, param reduction, and thermal resilience claims can be easily updated or extended for future benchmarks.
+  – Adjust parameters in `tdc_biohybrid` or initial conditions to test new regimes;
+  – Adapt for long-chain or extended sensor/junction scenarios to mirror realistic bioelectronic hybrid devices;
+  – SNR, param reduction, and thermal resilience claims can be easily updated or extended for future benchmarks.
 
 ## **Contact**
 
