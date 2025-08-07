@@ -12,15 +12,15 @@ This repository demonstrates a quantitative comparison between classic biophysic
 
 ## **Rationale**
 
-  – **Classic models (HH+Langevin):** Used for detailed single-neuron/hybrid circuit simulation, typically requiring 7-10+ physical parameters for complex, noisy or sensor hybrid scenarios.
-  – **TDC (Tidal-drift communication) model:** Condenses drift, entropic noise, and residual signalling into a compact, low-parametric equation, reducing parameter count by ~50% without loss of essential signal dynamics, especially in long-chain or sensor hybrids.
+- **`Classic models (HH+Langevin)`:** Used for detailed single-neuron/hybrid circuit simulation, typically requiring 7-10+ physical parameters for complex, noisy or sensor hybrid scenarios.
+– **`TDC (Tidal-drift communication) model`:** Condenses drift, entropic noise, and residual signalling into a compact, low-parametric equation, reducing parameter count by ~50% without loss of essential signal dynamics, especially in long-chain or sensor hybrids.
 
 ## **Key improvements & validation metrics**
 
-**Biophysical grounding:**
-  – **AP width / τ_d = 1.5ms:** Matches mammalian experimental data.
-  – **Temp scaling (Q10=3):** Standard for ion channel kinetics.
-  – **Noise term:** Realistic Johnson–Nyquist noise, scales with √T.
+– **`Biophysical grounding`:**
+– **`AP width / τ_d = 1.5ms`:** Matches mammalian experimental data.
+– **`Temp scaling (Q10=3)`:** Standard for ion channel kinetics.
+– **`Noise term`:** Realistic Johnson–Nyquist noise, scales with √T.
 
 **TDC parameter mapping:**
 | parameter | meaning                                                      | example value   |
@@ -35,8 +35,8 @@ This repository demonstrates a quantitative comparison between classic biophysic
 - Simulate action potential (AP)-like signals using both HH+Langevin (10 param) and TDC (5 param) at:
     - 37°C (physiological)
     - 50°C (thermal stress)
-  – **Benchmark:** signal-to-noise ratio (SNR) calculated in the main post-AP window ( ms).
-  – **Criteria:** parameter reduction ≥50%; TDC delivers >2dB SNR gain over baseline at 50°C.
+  – **`Benchmark`:** signal-to-noise ratio (SNR) calculated in the main post-AP window ( ms).
+  – **`Criteria`:** parameter reduction ≥50%; TDC delivers >2dB SNR gain over baseline at 50°C.
 
 ## **Expected results**
 
