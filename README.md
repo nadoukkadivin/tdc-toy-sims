@@ -12,8 +12,8 @@ This repository demonstrates a quantitative comparison between classic biophysic
 
 ## **Rationale**
 
-- **`Classic models (HH+Langevin)`:** Used for detailed single-neuron/hybrid circuit simulation, typically requiring 7-10+ physical parameters for complex, noisy or sensor hybrid scenarios
-– **`TDC (Tidal-drift communication) model`:** Condenses drift, entropic noise, and residual signalling into a compact, low-parametric equation, reducing parameter count by ~50% without loss of essential signal dynamics, especially in long-chain or sensor hybrids.
+- **Classic models (HH+Langevin):** Used for detailed single-neuron/hybrid circuit simulation, typically requiring 7-10+ physical parameters for complex, noisy or sensor hybrid scenarios
+- **TDC (Tidal-drift communication) model:** Condenses drift, entropic noise, and residual signalling into a compact, low-parametric equation, reducing parameter count by ~50% without loss of essential signal dynamics, especially in long-chain or sensor hybrids.
 
 ## **Key improvements & validation metrics**
 
@@ -35,8 +35,8 @@ This repository demonstrates a quantitative comparison between classic biophysic
 - Simulate action potential (AP)-like signals using both HH+Langevin (10 param) and TDC (5 param) at:
     - 37°C (physiological)
     - 50°C (thermal stress)
-  – **`Benchmark`:** signal-to-noise ratio (SNR) calculated in the main post-AP window ( ms).
-  – **`Criteria`:** parameter reduction ≥50%; TDC delivers >2dB SNR gain over baseline at 50°C.
+- **Benchmark:** signal-to-noise ratio (SNR) calculated in the main post-AP window ( ms).
+- **Criteria:** parameter reduction ≥50%; TDC delivers >2dB SNR gain over baseline at 50°C.
 
 ## **Expected results**
 
@@ -89,9 +89,9 @@ Saved figures: tdc_vs_hh_high_temp_YYYYMMDD_HHMMSS.pdf, tdc_vs_hh_high_temp_YYYY
   - Parameter mapping:  NMDA/AMPA kinetics → Drift (Dr), Ca²⁺ decay timescales → Residue decay (α), Action      potential physiology → Inertia (I)
 
 ### **Validation & benchmarking**
-  – **Goldman, D.E. (1943).** “Potential, Impedance, and Rectification in Membranes.” Journal of General Physiology, 27(1), 37–60 (https://doi.org/10.1085/jgp.27.1.37);
-  – **Goldwyn, E.E., & Shea-Brown, E. (2011).** “The what and where of adding channel noise to the Hodgkin-Huxley equations.” Journal of Neurophysiology, 106(4), 2107–2118 (https://journals.physiology.org/doi/full/10.1152/jn.00686.2003); 
-  – **IEC 60601-2-78:2023.** Medical Electrical Equipment—Part 2-78: Particular requirements for basic safety and essential performance of medical electrical equipment for electrophysiological signal quality (https://webstore.iec.ch/en/publication/31388).
+- **Goldman, D.E. (1943).** “Potential, Impedance, and Rectification in Membranes.” Journal of General Physiology, 27(1), 37–60 (https://doi.org/10.1085/jgp.27.1.37);
+- **Goldwyn, E.E., & Shea-Brown, E. (2011).** “The what and where of adding channel noise to the Hodgkin-Huxley equations.” Journal of Neurophysiology, 106(4), 2107–2118 (https://journals.physiology.org/doi/full/10.1152/jn.00686.2003); 
+- **IEC 60601-2-78:2023.** Medical Electrical Equipment—Part 2-78: Particular requirements for basic safety and essential performance of medical electrical equipment for electrophysiological signal quality (https://webstore.iec.ch/en/publication/31388).
 
   ### **Param legend**
 | **parameter      | source                        | value in code**          | 
@@ -102,15 +102,15 @@ Saved figures: tdc_vs_hh_high_temp_YYYYMMDD_HHMMSS.pdf, tdc_vs_hh_high_temp_YYYY
 
 ## **Reproducibility & validation**
 
-  – **`Random seed fixed`** for reproducibility.
-  – **`Automated validations block`:** assert param/SNR criteria (code output & exit code).
-  – **`Output plots`:** Top: room temp (37°C), baseline vs. TDC; Bottom: 50°C stress test, baseline vs. TDC.
+- **Random seed fixed** for reproducibility.
+- **Automated validations block:** assert param/SNR criteria (code output & exit code).
+- **Output plots:** Top: room temp (37°C), baseline vs. TDC; Bottom: 50°C stress test, baseline vs. TDC.
 
 ## **Customization/extension**
 
-  – Adjust parameters in `tdc_biohybrid` or initial conditions to test new regimes;
-  – Adapt for long-chain or extended sensor/junction scenarios to mirror realistic bioelectronic hybrid devices;
-  – SNR, param reduction, and thermal resilience claims can be easily updated or extended for future benchmarks.
+- Adjust parameters in `tdc_biohybrid` or initial conditions to test new regimes;
+- Adapt for long-chain or extended sensor/junction scenarios to mirror realistic bioelectronic hybrid devices;
+- SNR, param reduction, and thermal resilience claims can be easily updated or extended for future benchmarks.
 
 ## **Contact**
 
