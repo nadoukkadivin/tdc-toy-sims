@@ -76,7 +76,7 @@ Saved figures: tdc_vs_hh_high_temp_YYYYMMDD_HHMMSS.pdf, tdc_vs_hh_high_temp_YYYY
 
 ### **Biophysical models**
   - **Hodgkin & Huxley** (1952), “A quantitative description of membrane current and its application to conduction and excitation in nerve”, Journal of Physiology, 117(4) 500–544 https://pmc.ncbi.nlm.nih.gov/articles/PMC1392413/;
-  - Gerstner et al (2014), **Neuronal Dynamics: From Single Neurons to Networks and Models of Cognition.**, https://neuronaldynamics.epfl.ch/online/ (chapter 2: https://neuronaldynamics.epfl.ch/online/Ch2.S2.html);
+  - Gerstner et al (2014), **Neuronal Dynamics: From Single Neurons to Networks and Models of Cognition.**, https://neuronaldynamics.epfl.ch/online/, (chapter 2: https://neuronaldynamics.epfl.ch/online/Ch2.S2.html);
   - Hille (2001), **Ion Channels of Excitable Membranes**, 3rd Edition, Sinauer Associates https://archive.org/details/ionchannelsofexc0003hill; 
   - Yang & Zheng (2014), **“Temperature dependence of ion channel kinetics”**, Channels, 8(4) 308–321 https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2891698/; 
   - **Channel Noise and Johnson–Nyquist Theory**: Johnson (1928). “Thermal Agitation of Electricity in Conductors.” Physical Review, 32(1) 97–109 ttps://web.mit.edu/dvp/Public/noise-paper.pdf);
@@ -89,16 +89,16 @@ Saved figures: tdc_vs_hh_high_temp_YYYYMMDD_HHMMSS.pdf, tdc_vs_hh_high_temp_YYYY
   - Parameter mapping:  NMDA/AMPA kinetics → Drift (Dr), Ca²⁺ decay timescales → Residue decay (α), Action      potential physiology → Inertia (I)
 
 ### **Validation & benchmarking**
-- **Goldman, D.E. (1943).** “Potential, Impedance, and Rectification in Membranes.” Journal of General Physiology, 27(1), 37–60 (https://doi.org/10.1085/jgp.27.1.37);
-- **Goldwyn, E.E., & Shea-Brown, E. (2011).** “The what and where of adding channel noise to the Hodgkin-Huxley equations.” Journal of Neurophysiology, 106(4), 2107–2118 (https://journals.physiology.org/doi/full/10.1152/jn.00686.2003); 
-- **IEC 60601-2-78:2023.** Medical Electrical Equipment—Part 2-78: Particular requirements for basic safety and essential performance of medical electrical equipment for electrophysiological signal quality (https://webstore.iec.ch/en/publication/31388).
+- **Goldman** (1943) “Potential, Impedance, and Rectification in Membranes.” Journal of General Physiology, 27(1), 37–60 (https://doi.org/10.1085/jgp.27.1.37);
+- **Goldwyn & Shea-Brown** (2011) “The what and where of adding channel noise to the Hodgkin-Huxley equations”, Journal of Neurophysiology, 106(4), 2107–2118 (https://journals.physiology.org/doi/full/10.1152/jn.00686.2003); 
+- **IEC 60601-2-78** (2023) 'Medical Electrical Equipment—Part 2-78: Particular requirements for basic safety and essential performance of medical electrical equipment for electrophysiological signal quality" (https://webstore.iec.ch/en/publication/31388).
 
   ### **Param legend**
-| **parameter      | source                        | value in code**          | 
-|-----------------------------------------------------------------------------|
-| τ_d=1.5ms	     | mammalian AP duration         | τ_d = 1.5e-3               |
-| Q10=3	         | standard ion channel kinetics | phi = 3.0**((T-298)/10)    |
-| α=20 s⁻¹       |Ca²⁺ decay in synapses         |alpha = 1/50e-3             |
+| parameter   | source                       | value in code              |
+|-------------|------------------------------|----------------------------|
+| τ_d = 1.5ms | Mammalian AP duration        | `τ_d = 1.5e-3`             |
+| Q₁₀ = 3     | Ion channel Q10 scaling      | `phi = 3.0**((T - 298)/10)`|
+| α = 20 s⁻¹  | Ca²⁺ decay in synapses       | `alpha = 1 / 50e-3`        |
 
 ## **Reproducibility & validation**
 
