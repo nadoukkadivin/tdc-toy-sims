@@ -102,15 +102,15 @@ Saved figures: tdc_vs_hh_high_temp_YYYYMMDD_HHMMSS.pdf, tdc_vs_hh_high_temp_YYYY
 
 ## **Reproducibility & validation**
 
-  – **Random seed fixed** for reproducibility.
-  – **Automated validations block:** assert param/SNR criteria (code output & exit code).
-  – **Output plots:** Top: room temp (37°C), baseline vs. TDC; Bottom: 50°C stress test, baseline vs. TDC.
+  – **`Random seed fixed`** for reproducibility.
+  – **`Automated validations block`:** assert param/SNR criteria (code output & exit code).
+  – **`Output plots`:** Top: room temp (37°C), baseline vs. TDC; Bottom: 50°C stress test, baseline vs. TDC.
 
 ## **Customization/extension**
 
-  – Adjust parameters in `tdc_biohybrid` or initial conditions to test new regimes;
-  – Adapt for long-chain or extended sensor/junction scenarios to mirror realistic bioelectronic hybrid devices;
-  – SNR, param reduction, and thermal resilience claims can be easily updated or extended for future benchmarks.
+  – `Adjust` parameters in `tdc_biohybrid` or initial conditions to test new regimes;
+  – `Adapt` for long-chain or extended sensor/junction scenarios to mirror realistic bioelectronic hybrid devices;
+  – `SNR`, param reduction, and thermal resilience claims can be easily updated or extended for future benchmarks.
 
 ## **Contact**
 
