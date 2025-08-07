@@ -76,17 +76,17 @@ Saved figures: tdc_vs_hh_high_temp_YYYYMMDD_HHMMSS.pdf, tdc_vs_hh_high_temp_YYYY
 
 ### **Biophysical models**
   - **Hodgkin & Huxley** (1952), “A quantitative description of membrane current and its application to conduction and excitation in nerve”, Journal of Physiology, 117(4) 500–544 https://pmc.ncbi.nlm.nih.gov/articles/PMC1392413/;
-  - Gerstner et al (2014), **Neuronal Dynamics: From Single Neurons to Networks and Models of Cognition.**, https://neuronaldynamics.epfl.ch/online/, (chapter 2: https://neuronaldynamics.epfl.ch/online/Ch2.S2.html);
-  - Hille (2001), **Ion Channels of Excitable Membranes**, 3rd Edition, Sinauer Associates https://archive.org/details/ionchannelsofexc0003hill; 
-  - Yang & Zheng (2014), **“Temperature dependence of ion channel kinetics”**, Channels, 8(4) 308–321 https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2891698/; 
-  - **Channel Noise and Johnson–Nyquist Theory**: Johnson (1928). “Thermal Agitation of Electricity in Conductors.” Physical Review, 32(1) 97–109 ttps://web.mit.edu/dvp/Public/noise-paper.pdf);
-  - Bertram (2021), **“Channel Noise in Neurons.”**, https://www.math.fsu.edu/~bertram/course_papers/Fall21/channel_noise.pdf
+  - Gerstner et al (2014) **'Neuronal Dynamics: From Single Neurons to Networks and Models of Cognition"** (https://neuronaldynamics.epfl.ch/online/), (chapter 2: https://neuronaldynamics.epfl.ch/online/Ch2.S2.html);
+  - Hille (2001) **"Ion Channels of Excitable Membranes"**, 3rd Edition, Sinauer Associates (https://archive.org/details/ionchannelsofexc0003hill); 
+  - Yang & Zheng (2014) **“Temperature dependence of ion channel kinetics”**, Channels, 8(4) 308–321 (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2891698/); 
+  - **Channel Noise and Johnson–Nyquist Theory**: Johnson (1928) “Thermal Agitation of Electricity in Conductors”, Physical Review, 32(1) 97–109 (https://web.mit.edu/dvp/Public/noise-paper.pdf);
+  - Bertram (2021) **“Channel Noise in Neurons.”** (https://www.math.fsu.edu/~bertram/course_papers/Fall21/channel_noise.pdf).
 
 ### **TDC formalism core**
   - Prigogine (1977) *Dissipative Structures in Energy and Matter*  
   - Friston (2010) *Free-Energy Principle: Unified Brain Theory*  
   - Current preprints: *Substrate-agnostic signalling framework* (contact author)
-  - Parameter mapping:  NMDA/AMPA kinetics → Drift (Dr), Ca²⁺ decay timescales → Residue decay (α), Action      potential physiology → Inertia (I)
+  - Parameter mapping:  NMDA/AMPA kinetics → Drift (Dr), Ca²⁺ decay timescales → Residue decay (α), Action potential physiology → Inertia (I)
 
 ### **Validation & benchmarking**
 - **Goldman** (1943) “Potential, Impedance, and Rectification in Membranes.” Journal of General Physiology, 27(1), 37–60 (https://doi.org/10.1085/jgp.27.1.37);
@@ -104,7 +104,7 @@ Saved figures: tdc_vs_hh_high_temp_YYYYMMDD_HHMMSS.pdf, tdc_vs_hh_high_temp_YYYY
 
 - **Random seed fixed** for reproducibility.
 - **Automated validations block:** assert param/SNR criteria (code output & exit code).
-- **Output plots:** Top: room temp (37°C), baseline vs. TDC; Bottom: 50°C stress test, baseline vs. TDC.
+- **Output plots:** Top: room temp (37°C), baseline vs TDC; Bottom: 50°C stress test, baseline vs TDC.
 
 ## **Customization/extension**
 
