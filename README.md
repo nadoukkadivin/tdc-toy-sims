@@ -76,11 +76,11 @@ Saved figures: tdc_vs_hh_high_temp_YYYYMMDD_HHMMSS.pdf, tdc_vs_hh_high_temp_YYYY
 
 ### **Biophysical models**
   - **Hodgkin & Huxley** (1952), “A quantitative description of membrane current and its application to conduction and excitation in nerve”, Journal of Physiology, 117(4) 500–544 https://pmc.ncbi.nlm.nih.gov/articles/PMC1392413/;
-  - Gerstner et al (2014) **'Neuronal Dynamics: From Single Neurons to Networks and Models of Cognition"** (https://neuronaldynamics.epfl.ch/online/), (chapter 2: https://neuronaldynamics.epfl.ch/online/Ch2.S2.html);
+  - Gerstner et al (2014) **"Neuronal Dynamics: From Single Neurons to Networks and Models of Cognition"** (https://neuronaldynamics.epfl.ch/online/Ch2.S2.html);
   - Hille (2001) **"Ion Channels of Excitable Membranes"**, 3rd Edition, Sinauer Associates (https://archive.org/details/ionchannelsofexc0003hill); 
   - Yang & Zheng (2014) **“Temperature dependence of ion channel kinetics”**, Channels, 8(4) 308–321 (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2891698/); 
   - **Channel Noise and Johnson–Nyquist Theory**: Johnson (1928) “Thermal Agitation of Electricity in Conductors”, Physical Review, 32(1) 97–109 (https://web.mit.edu/dvp/Public/noise-paper.pdf);
-  - Bertram (2021) **“Channel Noise in Neurons.”** (https://www.math.fsu.edu/~bertram/course_papers/Fall21/channel_noise.pdf).
+  - Bertram (2021) **“Channel Noise in Neurons”** (https://www.math.fsu.edu/~bertram/course_papers/Fall21/channel_noise.pdf).
 
 ### **TDC formalism core**
   - Prigogine (1977) *Dissipative Structures in Energy and Matter*  
