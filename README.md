@@ -94,12 +94,11 @@ Yang & Zheng (2014), **“Temperature dependence of ion channel kinetics”**, C
 – **IEC 60601-2-78:2023.** Medical Electrical Equipment—Part 2-78: Particular requirements for basic safety and essential performance of medical electrical equipment for electrophysiological signal quality (https://webstore.iec.ch/en/publication/31388).
 
   ### **Param legend**
-
-| parameter    | source                        | value in code              | 
------------------------------------------------------------------------------
-τ_d=1.5ms	     | mammalian AP duration         | τ_d = 1.5e-3               |
-Q10=3	         | standard ion channel kinetics | phi = 3.0**((T-298)/10)    |
-α=20 s⁻¹       |Ca²⁺ decay in synapses         |alpha = 1/50e-3             |
+| **parameter      | source                        | value in code**          | 
+|-----------------------------------------------------------------------------|
+| τ_d=1.5ms	     | mammalian AP duration         | τ_d = 1.5e-3               |
+| Q10=3	         | standard ion channel kinetics | phi = 3.0**((T-298)/10)    |
+| α=20 s⁻¹       |Ca²⁺ decay in synapses         |alpha = 1/50e-3             |
 
 ## **Reproducibility & validation**
 
