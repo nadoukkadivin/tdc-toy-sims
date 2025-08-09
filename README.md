@@ -2,7 +2,7 @@
 # toy sims for wip tidal drift communication (tdc) — example 2 (`tdc_eg2_toysim.py`)
 
 ### **What is this?**
-This example demonstrates the Tidal-Drift Communication (TDC) framework for substrate-agnostic, multi-domain signal propagation through a chain representing **gut → blood → brain**. It benchmarks TDC’s compactness and resilience against a domain-adapted Hodgkin-Huxley + Langevin baseline, including entropy-driven interface coupling and residue memory transfer.
+This repository demonstrates the Tidal-drift communication (TDC) framework for substrate-agnostic, multi-domain signal propagation through a chain representing **gut → blood → brain**. It benchmarks TDC’s compactness and resilience against a domain-adapted Hodgkin-Huxley + Langevin baseline including entropy-driven interface coupling and residue memory transfer.
 
 ## **Contents**
 
