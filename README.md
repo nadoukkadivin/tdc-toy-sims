@@ -12,14 +12,14 @@ This repository demonstrates a quantitative comparison between classic biophysic
 
 ## **Rationale**
 
-- **Classic models (HH+Langevin):** Used for detailed single-neuron/hybrid circuit simulation, typically requiring 7-10+ physical parameters for complex, noisy or sensor hybrid scenarios
+- **Classic models (HH+Langevin):** Used for detailed single-neuron/hybrid circuit simulation, typically requiring 7-10+ physical parameters for complex, noisy or sensor hybrid scenarios;
 - **TDC (Tidal-drift communication) model:** Condenses drift, entropic noise, and residual signalling into a compact, low-parametric equation, reducing parameter count by ~50% without loss of essential signal dynamics, especially in long-chain or sensor hybrids.
 
 ## **Key improvements & validation metrics**
 
 - **Biophysical grounding:**
-- **AP width / τ_d = 1.5ms:** Matches mammalian experimental data.
-- **Temp scaling (Q10=3):** Standard for ion channel kinetics.
+- **AP width / τ_d = 1.5ms:** Matches mammalian experimental data;
+- **Temp scaling (Q10=3):** Standard for ion channel kinetics;
 - **Noise term:** Realistic Johnson–Nyquist noise, scales with √T.
 
 **TDC parameter mapping:**
