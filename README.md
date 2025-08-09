@@ -1,26 +1,20 @@
 # tdc-toy-sims
-toy sims for wip tidal drift communication (tdc) ex
+# toy sims for wip tidal drift communication (tdc) — example 2 (`tdc_eg2_toysim.py`)
 
 ### **What is this?**
 This example demonstrates the Tidal-Drift Communication (TDC) framework for substrate-agnostic, multi-domain signal propagation through a chain representing **gut → blood → brain**. It benchmarks TDC’s compactness and resilience against a domain-adapted Hodgkin-Huxley + Langevin baseline, including entropy-driven interface coupling and residue memory transfer.
-
-***
 
 ## **Contents**
 
 - **`tdc_eg2_toysim.py`;** Python code for multi-domain chain simulation, SNR benchmarking, automated thermal resilience validation and plots.
 - **`README.md`:** This documentation outlines the context, validation protocol, result interpretation and references.
-- **(Optional)**: Saved PDF/PNG figures showing signal propagation and result metrics.
-
-***
+- (optional) **`.pdf`** and **`.png`** figures showing signal propagation and result metrics are auto-saved on each run.
 
 ## **Rationale**
 
 - **Hybrid modeling challenge:** Biological signals often traverse distinct “substrates” (chemical → blood → neural), each with unique physics, scales, and dissipation.
 - **Classic models (HH+Langevin):** Effective for electrical domains but not dimensionless chemical or biochemical regimes.
 - **TDC model advantages:** Uses five core substrate-agnostic parameters for each domain (Dr, S, I, r₀, α), supports entropy-informed interface transduction, and models residue memory transfer.
-
-***
 
 ## **Key features & validation metrics**
 
@@ -30,7 +24,7 @@ This example demonstrates the Tidal-Drift Communication (TDC) framework for subs
 - **Interface coupling:** Entropy-driven, not arbitrary percent loss
 - **Residue memory:** Physically accumulates and influences downstream domains
 
-**Parameter mapping (per domain):**
+**TDC parameter mapping:**
 
 | parameter | description                     | example values (gut/blood/brain) |
 |-----------|---------------------------------|----------------------------------|
@@ -41,17 +35,14 @@ This example demonstrates the Tidal-Drift Communication (TDC) framework for subs
 | α         | Residue decay rate (s⁻¹)        | 1/200, 1/100, 1/50               |
 
 **Validation protocol:**
-- Simulate propagation through all three domains at both 37°C and under 50°C “stress.”
+- Simulate propagation through all three domains at 37°C and under 50°C “stress.”
 - Calculate SNR in domain-appropriate time windows (Gut: 100–400ms, Blood: 3–8ms, Brain: 5–10ms).
 - Report parameter reduction (8→5 params/domain), SNR change, and thermal resilience.
-
-***
+- Benchmark: Signal-to-noise ratio (SNR) is calculated in a physiologically relevant analysis window for each domain: gut: 100–400ms (reflecting slow chemical waves), blood: 3–8ms (intermediate transmission),vbrain: 5–10ms (rapid neural activity)
+- **Criteria:** **1.** parameter reduction: At least 37.5% fewer model parameters in TDC vs. baseline HH+Langevin (8 → 5 per domain);  **2.** signal robustness: for 37°C (normal), SNR for TDC is ≥ baseline SNR in brain/blood and no worse than -1.5dB in gut; **3.** thermal resilience: under 50°C thermal stress, the domain-averaged SNR improvement (TDC minus baseline) must exceed +2dB.
 
 ## **Expected results**  
 
-Example output:
-```
-=== TDC gut-brain validation ===
 Parameter reduction: 37.5%
 Gut:
   37°C: HH=7.4dB, TDC=8.1dB → Δ=+0.7dB
@@ -71,8 +62,6 @@ Saved: tdc_eg2_results_YYYYMMDD_HHMMSS.pdf/png
   - SNR is generally preserved per domain (slightly lower or higher by ≤ 1.5dB under homeostasis);
   - TDC shows a domain-averaged SNR gain >2dB under thermal stress.
 
-***
-
 ## **How to run**
 
 1. **Install dependencies:**
@@ -90,26 +79,22 @@ Saved: tdc_eg2_results_YYYYMMDD_HHMMSS.pdf/png
    - `0` = Validation passed
    - `1` = Validation failed
 
-***
-
 ## **References & parameter sources**
 
 **Biophysical models:**
-   - Hodgkin & Huxley (1952), “A quantitative description of membrane current and its application to conduction and excitation in nerve”, Journal of Physiology, 117(4) 500–544 https://pmc.ncbi.nlm.nih.gov/articles/PMC1392413/;
+   - Hodgkin & Huxley (1952) “A quantitative description of membrane current and its application to conduction and excitation in nerve”, Journal of Physiology, 117(4) 500–544 https://pmc.ncbi.nlm.nih.gov/articles/PMC1392413/;
    - Gerstner et al (2014) "Neuronal Dynamics: From Single Neurons to Networks and Models of Cognition" (https://neuronaldynamics.epfl.ch/online/Ch2.S2.html);
    - Hille (2001) "Ion Channels of Excitable Membranes", 3rd Edition, Sinauer Associates (https://archive.org/details/ionchannelsofexc0003hill);
    - Yang & Zheng (2014) “Temperature dependence of ion channel kinetics”, Channels, 8(4) 308–321 (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2891698/);
    - Bertram (2021) “Channel Noise in Neurons” (https://www.math.fsu.edu/~bertram/course_papers/Fall21/channel_noise.pdf).
 
 **Entropy/transduction theory:**
-- Prigogine (1977) *Dissipative Structures in Energy and Matter*
-- Friston (2010) Free-Energy Principle
+- Prigogine (1977) *Dissipative Structures in Energy and Matter*;
+- Friston (2010) *Free-Energy Principle: Unified Brain Theory*.
 
 **Multi-domain hybrid modeling & benchmarking:**
 - Goldwyn & Shea-Brown (2011), J Neurophys: [https://journals.physiology.org/doi/full/10.1152/jn.00686.2003](https://journals.physiology.org/doi/full/10.1152/jn.00686.2003)
 - IEC 60601-2-78:2023 electrophysiological SNR standards: [https://webstore.iec.ch/en/publication/31388](https://webstore.iec.ch/en/publication/31388)
-
-***
 
 ## **Param legend**
 
@@ -119,8 +104,6 @@ Saved: tdc_eg2_results_YYYYMMDD_HHMMSS.pdf/png
 | Q10       | Channel temperature factor         | 1.8, 2.5, 3.0         |
 | α         | Residue decay rate                 | 1/200, 1/100, 1/50    |
 
-***
-
 ## **Reproducibility & validation **
 
 - All code seed values are fixed for exact result replication.
@@ -128,25 +111,17 @@ Saved: tdc_eg2_results_YYYYMMDD_HHMMSS.pdf/png
 - Automated assertions check param reduction, SNR consistency, and thermal performance.
 - Plots and outputs are timestamped for provenance.
 
-***
-
 ## **Customization/extension**
 
 - Adjust any domain parameters to simulate other hybrid chains (vagus, sensor–bio, etc.).
 - Tune entropy_transduction to explore non-ideal coupling or pathologies.
 - Extend to more domains: increase `N`, generalize params.
 
-***
-
 ## **Contact**
 
-For scientific queries, bugs or collab:
-[Nadoukka Divin], [Rhythm and Density], [nadoukkadivin@gmail.com]
+For questions, bugs or collab: [Nadoukka Divin], [Rhythm and Density], [nadoukkadivin@gmail.com]
 
-***
 
 ### Sample figure output
 
 Image: “Gut–blood–brain hybrid chain resilience” (insert `eg2_sample_figure.png` here) **Top:** gut (slow, chemical) → **Middle:** blood → **Bottom:** brain, all showing TDC vs HH* performance at 37°C/50°C and residue dynamics.
-
-***
