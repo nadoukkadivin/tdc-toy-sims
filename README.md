@@ -8,7 +8,7 @@ This repository demonstrates a quantitative comparison between classic biophysic
 
 - **`tdc_eg1_toysim.py`:** Python code for running both baseline (HH+Langevin) and TDC models, automated benchmarking and figure generation.
 - **`README.md`:** This documentation outlines the context, validation protocol, result interpretation and references.
-- (optional) Output figures: Publication-quality **`.pdf`** and **`.png`** are auto-saved on each run.
+- (optional) **`.pdf`** and **`.png`** figures showing signal propagation and result metrics are auto-saved on each run.
 
 ## **Rationale**
 
@@ -32,11 +32,9 @@ This repository demonstrates a quantitative comparison between classic biophysic
 | α         | residue decay rate (1/50ms ~ Ca²⁺ decay timescale)           | 20 s⁻¹          |
 
 **Validation protocol:**
-- Simulate action potential (AP)-like signals using both HH+Langevin (10 param) and TDC (5 param) at:
-    - 37°C (physiological)
-    - 50°C (thermal stress)
+- Simulate action potential (AP)-like signals using both HH+Langevin (10 param) and TDC (5 param) at 37°C (physiological) and 50°C (thermal stress).
 - **Benchmark:** signal-to-noise ratio (SNR) calculated in the main post-AP window ( ms).
-- **Criteria:** parameter reduction ≥50%; TDC delivers >2dB SNR gain over baseline at 50°C.
+- **Criteria:** **1.** parameter reduction ≥50%; **2.** TDC delivers >2dB SNR gain over baseline at 50°C.
 
 ## **Expected results**
 
@@ -75,7 +73,7 @@ Saved figures: tdc_vs_hh_high_temp_YYYYMMDD_HHMMSS.pdf, tdc_vs_hh_high_temp_YYYY
 ## **References & parameter sources**
 
 ### **Biophysical models**
-  - **Hodgkin & Huxley** (1952), “A quantitative description of membrane current and its application to conduction and excitation in nerve”, Journal of Physiology, 117(4) 500–544 https://pmc.ncbi.nlm.nih.gov/articles/PMC1392413/;
+  - **Hodgkin & Huxley** (1952) “A quantitative description of membrane current and its application to conduction and excitation in nerve”, Journal of Physiology, 117(4) 500–544 https://pmc.ncbi.nlm.nih.gov/articles/PMC1392413/;
   - Gerstner et al (2014) **"Neuronal Dynamics: From Single Neurons to Networks and Models of Cognition"** (https://neuronaldynamics.epfl.ch/online/Ch2.S2.html);
   - Hille (2001) **"Ion Channels of Excitable Membranes"**, 3rd Edition, Sinauer Associates (https://archive.org/details/ionchannelsofexc0003hill); 
   - Yang & Zheng (2014) **“Temperature dependence of ion channel kinetics”**, Channels, 8(4) 308–321 (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2891698/); 
@@ -83,10 +81,10 @@ Saved figures: tdc_vs_hh_high_temp_YYYYMMDD_HHMMSS.pdf, tdc_vs_hh_high_temp_YYYY
   - Bertram (2021) **“Channel Noise in Neurons”** (https://www.math.fsu.edu/~bertram/course_papers/Fall21/channel_noise.pdf).
 
 ### **TDC formalism core**
-  - Prigogine (1977) *Dissipative Structures in Energy and Matter*  
-  - Friston (2010) *Free-Energy Principle: Unified Brain Theory*  
+  - Prigogine (1977) *Dissipative Structures in Energy and Matter*;  
+  - Friston (2010) *Free-Energy Principle: Unified Brain Theory*;  
   - Current preprints: *Substrate-agnostic signalling framework* (contact author)
-  - Parameter mapping:  NMDA/AMPA kinetics → Drift (Dr), Ca²⁺ decay timescales → Residue decay (α), Action potential physiology → Inertia (I)
+  - Parameter mapping:  NMDA/AMPA kinetics → Drift (Dr), Ca²⁺ decay timescales → Residue decay (α), Action potential physiology → Inertia (I).
 
 ### **Validation & benchmarking**
 - **Goldman** (1943) “Potential, Impedance, and Rectification in Membranes.” Journal of General Physiology, 27(1), 37–60 (https://doi.org/10.1085/jgp.27.1.37);
@@ -104,7 +102,7 @@ Saved figures: tdc_vs_hh_high_temp_YYYYMMDD_HHMMSS.pdf, tdc_vs_hh_high_temp_YYYY
 
 - **Random seed fixed** for reproducibility.
 - **Automated validations block:** assert param/SNR criteria (code output & exit code).
-- **Output plots:** Top: room temp (37°C), baseline vs TDC; Bottom: 50°C stress test, baseline vs TDC.
+- **Output plots:** **Top:** room temp (37°C), baseline vs TDC; **Bottom:** 50°C stress test, baseline vs TDC.
 
 ## **Customization/extension**
 
@@ -118,6 +116,4 @@ For questions, bugs or collab: [Nadoukká Divin], [Rhythm and density], [nadoukk
 
 ### Sample figure output
 
-Image: “Bioelectronic hybrid resilience” (insert sample_figure.png here)
-**Top**: 37°C comparison (baseline vs TDC)
-**Bottom**: 50°C stress test showing TDC's SNR advantage)
+Image: “Bioelectronic hybrid resilience” (insert sample_figure.png here) **Top**: 37°C comparison (baseline vs TDC) **Bottom**: 50°C stress test showing TDC's SNR advantage)
