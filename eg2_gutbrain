@@ -15,92 +15,204 @@ from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 from datetime import datetime
 import sys
+from typing import Dict, List, Tuple, Callable
 
-np.random.seed(42)  # Reproducibility
+# Set random seed for reproducibility
+np.random.seed(42)
 
 # ==================================================================
-# Domain physics 
+# Physical constants and domain configuration
 # ==================================================================
+K_B = 1.38e-23      # Boltzmann constant (J/K)
+CM = 1e-6           # Membrane capacitance (F/cm²)
+T_ENV = 310         # Standard temperature (37°C = 310K)
+T_HIGH = 323        # Stress temperature (50°C = 323K)
 
-DOMAINS = ['Gut', 'Blood', 'Brain']
-N = len(DOMAINS)
-k_B = 1.38e-23
-Cm = 1e-6
-T_env = 310  # 37°C
-T_high = 323  # 50°C
-
-# Domain-specific timescales (s)
-TAU_D = [2.0, 0.5, 0.0015]  # Gut(2s), Blood(0.5s), Brain(1.5ms)
-Q10_FACTORS = [1.8, 2.5, 3.0]  # Temperature sensitivity
+# Domain configuration with explicit indices
+DOMAIN_CONFIG = {
+    'GUT': {
+        'index': 0,
+        'tau_d': 2.0,       # Slow chemical timescale (s)
+        'q10': 1.8,
+        'window': (100, 400) # Analysis window (ms)
+    },
+    'BLOOD': {
+        'index': 1,
+        'tau_d': 0.5,
+        'q10': 2.5,
+        'window': (3, 8)
+    },
+    'BRAIN': {
+        'index': 2,
+        'tau_d': 0.0015,    # Fast neural timescale (1.5ms)
+        'q10': 3.0,
+        'window': (5, 10)
+    }
+}
+DOMAIN_NAMES = list(DOMAIN_CONFIG.keys())
 
 # ==================================================================
 # Cross-domain transduction
 # ==================================================================
 
-def entropy_transduction(signal, T, domain_from, domain_to):
-    """Signal transduction using entropy gradients"""
-    dS = Q10_FACTORS[domain_to] / Q10_FACTORS[domain_from]
-    loss = 0.3 + 0.1 * np.random.normal()  # 30±10% loss
-    return signal * np.sqrt(dS) * (1 - loss)
+def entropy_transduction(
+    signal: np.ndarray, 
+    T: float, 
+    domain_from: str, 
+    domain_to: str
+) -> np.ndarray:
+    """
+    Signal transduction using entropy gradients.
+    
+    Args:
+        signal: Input signal vector
+        T: Absolute temperature (K)
+        domain_from: Source domain name
+        domain_to: Target domain name
+        
+    Returns:
+        Transduced signal with thermodynamic loss
+    """
+    cfg_from = DOMAIN_CONFIG[domain_from]
+    cfg_to = DOMAIN_CONFIG[domain_to]
+    
+    # Entropy gradient scaling
+    dS = cfg_to['q10'] / cfg_from['q10']
+    
+    # Thermodynamic loss (30±10%)
+    loss_factor = 0.7 + 0.1 * np.random.normal()
+    return signal * np.sqrt(dS) * loss_factor
 
 # ==================================================================
 # Biophysical models
 # ==================================================================
 
-def hh_langevin_domain(V, t, T, noise_scale, domain_idx):
-    """Domain-adapted Hodgkin-Huxley + Langevin"""
-    phi = Q10_FACTORS[domain_idx] ** ((T - 298) / 10)
+def hh_langevin_domain(
+    V: float, 
+    t: float, 
+    T: float, 
+    noise_scale: float, 
+    domain: str
+) -> float:
+    """
+    Domain-adapted Hodgkin-Huxley + Langevin model.
     
-    # Gut: chemical-like dynamics (dimensionless)
-    if domain_idx == 0:
-        dVdt = 0.05 * (1 - V) + noise_scale * np.random.normal()
-        return dVdt
+    Args:
+        V: Membrane potential (mV)
+        t: Time point (ms)
+        T: Temperature (K)
+        noise_scale: Noise intensity factor
+        domain: Domain name
+        
+    Returns:
+        dV/dt: Membrane potential derivative
+    """
+    cfg = DOMAIN_CONFIG[domain]
+    phi = cfg['q10']**((T - 298)/10)
     
-    # Blood/brain: electrical dynamics
-    alpha_n = phi * 0.01 * (V + 55) / (1 - np.exp(-(V + 55) / 10))
-    beta_n = phi * 0.125 * np.exp(-(V + 65) / 80)
-    n_inf = alpha_n / (alpha_n + beta_n)
+    # Gut: Chemical-like dynamics (dimensionless)
+    if domain == 'GUT':
+        return 0.05 * (1 - V) + noise_scale * np.random.normal()
     
-    alpha_m = phi * 0.1 * (V + 40) / (1 - np.exp(-(V + 40) / 10))
-    beta_m = phi * 4.0 * np.exp(-(V + 65) / 18)
-    m_inf = alpha_m / (alpha_m + beta_m)
+    # Electrical domains (Blood/Brain)
+    # Channel kinetics
+    alpha_n = phi * 0.01 * (V + 55) / (1 - np.exp(-(V + 55)/10))
+    beta_n = phi * 0.125 * np.exp(-(V + 65)/80)
+    n_inf = alpha_n/(alpha_n + beta_n)
     
-    alpha_h = phi * 0.07 * np.exp(-(V + 65) / 20)
-    beta_h = phi * 1.0 / (1 + np.exp(-(V + 35) / 10))
-    h_inf = alpha_h / (alpha_h + beta_h)
+    alpha_m = phi * 0.1 * (V + 40) / (1 - np.exp(-(V + 40)/10))
+    beta_m = phi * 4.0 * np.exp(-(V + 65)/18)
+    m_inf = alpha_m/(alpha_m + beta_m)
     
-    # Currents
-    gNa, gK, gL = [120e-3, 36e-3, 0.3e-3] 
-    ENa, EK, EL = [55, -77, -54]
+    alpha_h = phi * 0.07 * np.exp(-(V + 65)/20)
+    beta_h = phi * 1.0 / (1 + np.exp(-(V + 35)/10))
+    h_inf = alpha_h/(alpha_h + beta_h)
+    
+    # Ionic currents
+    gNa, gK, gL = 120e-3, 36e-3, 0.3e-3
+    ENa, EK, EL = 55, -77, -54
+    
     INa = gNa * m_inf**3 * h_inf * (V - ENa)
     IK = gK * n_inf**4 * (V - EK)
     IL = gL * (V - EL)
     
-    # Noise (domain-scaled)
-    noise = noise_scale * np.sqrt(4 * k_B * T * Cm) * np.random.normal()
+    # Domain-scaled noise
+    noise = noise_scale * np.sqrt(4 * K_B * T * CM) * np.random.normal()
     return - (INa + IK + IL) + noise
 
+def solve_hh_domain(
+    t: np.ndarray, 
+    T: float, 
+    domain: str, 
+    noise_scale: float
+) -> np.ndarray:
+    """
+    Solve HH-Langevin ODE for a domain.
+    
+    Args:
+        t: Time vector (ms)
+        T: Temperature (K)
+        domain: Domain name
+        noise_scale: Noise intensity factor
+        
+    Returns:
+        V: Solved membrane potential trace
+    """
+    cfg = DOMAIN_CONFIG[domain]
+    V0 = 0.0 if domain == 'GUT' else -65.0
+    solution = odeint(
+        hh_langevin_domain, 
+        V0, 
+        t, 
+        args=(T, noise_scale, domain)
+    )
+    return solution[:, 0]
+
 # ==================================================================
-# TDC core model 
+# TDC core model
 # ==================================================================
 
-def tdc_domain(t, Dr, S, I, r0, alpha, T, domain_idx):
-    """TDC substrate-agnostic formulation"""
-    τ_d = TAU_D[domain_idx]
-    τ_c = Dr * τ_d
-    phi = Q10_factors[domain_idx] ** ((T - 298) / 10)
+def tdc_domain(
+    t: np.ndarray, 
+    Dr: float, 
+    S: float, 
+    I: float, 
+    r0: float, 
+    alpha: float, 
+    T: float, 
+    domain: str
+) -> np.ndarray:
+    """
+    TDC substrate-agnostic formulation.
     
-    # Gut: Slow chemical waves
-    if domain_idx == 0:
-        persistence = I * np.exp(-t / τ_d) * np.cos(2 * np.pi * t / (τ_c * 10))
-    # Blood/Brain: Electrical signals
-    else:
-        persistence = I * np.exp(-t / τ_d) * np.cos(2 * np.pi * t / τ_c)
+    Args:
+        t: Time vector (ms)
+        Dr: Drift ratio
+        S: Entropy scaling
+        I: Signal intensity
+        r0: Residue amplitude
+        alpha: Decay coefficient
+        T: Temperature (K)
+        domain: Domain name
+        
+    Returns:
+        Signal vector for the domain
+    """
+    cfg = DOMAIN_CONFIG[domain]
+    tau_d = cfg['tau_d']
+    tau_c = Dr * tau_d
+    phi = cfg['q10']**((T - 298)/10)
     
-    # Entropy scales with thermal energy
-    entropy = S * np.sqrt(2 * k_B * T * Cm) * np.random.normal(size=len(t))
+    # Domain-specific waveform
+    if domain == 'GUT':
+        persistence = I * np.exp(-t/tau_d) * np.cos(2*np.pi*t/(tau_c*10))
+    else:  # Electrical domains
+        persistence = I * np.exp(-t/tau_d) * np.cos(2*np.pi*t/tau_c)
     
-    # Residue decays at domain-specific rate
+    # Entropic component
+    entropy = S * np.sqrt(2 * K_B * T * CM) * np.random.normal(size=len(t))
+    
+    # Residue component
     residue = r0 * np.exp(-alpha * t * phi)
     return persistence + entropy + residue
 
@@ -108,49 +220,89 @@ def tdc_domain(t, Dr, S, I, r0, alpha, T, domain_idx):
 # Signal propagation
 # ==================================================================
 
-def propagate_signal(t, model_func, params, T):
-    """Cross-domain propagation with TDC physics"""
-    signals = []
-    residues = [np.zeros(len(t)) for _ in range(N)]
+def propagate_signal(
+    t: np.ndarray, 
+    model_func: Callable, 
+    params: Dict, 
+    T: float,
+    residue_carryover: float = 0.4
+) -> Tuple[np.ndarray, List[np.ndarray]]:
+    """
+    Cross-domain propagation with residue accumulation.
     
-    for i in range(N):
+    Args:
+        t: Time vector (ms)
+        model_func: Model function (solve_hh_domain or tdc_domain)
+        params: Domain-specific parameters
+        T: Temperature (K)
+        residue_carryover: Fraction of residue transferred
+        
+    Returns:
+        signals: Propagated signals per domain
+        residues: Residue components per domain
+    """
+    signals = []
+    residues = [np.zeros(len(t)) for _ in DOMAIN_NAMES]
+    
+    for domain in DOMAIN_NAMES:
+        # Get domain parameters
+        domain_params = {
+            k: v[domain] if isinstance(v, dict) else v
+            for k, v in params.items()
+        }
+        
         # Generate domain signal
-        domain_params = {k: v[i] if isinstance(v, list) else v for k, v in params.items()}
-        signal = model_func(t, T=T, domain_idx=i, **domain_params)
+        signal = model_func(t, T=T, domain=domain, **domain_params)
         
         # Add residue from previous domain
-        if i > 0:
-            signal += 0.4 * residues[i-1]  # Residue carryover
+        prev_domain = DOMAIN_NAMES[DOMAIN_CONFIG[domain]['index'] - 1]
+        if DOMAIN_CONFIG[domain]['index'] > 0:
+            signal += residue_carryover * residues[DOMAIN_CONFIG[prev_domain]['index']]
         
-        # Store and update residue
+        # Store signal and update residue
         signals.append(signal)
-        residues[i] = domain_params['r0'] * signal * np.exp(-domain_params['alpha'] * t * Q10_FACTORS[i])
+        residues[DOMAIN_CONFIG[domain]['index']] = (
+            domain_params['r0'] * signal * 
+            np.exp(-domain_params['alpha'] * t * DOMAIN_CONFIG[domain]['q10'])
         
-        # Cross-domain transduction
-        if i < N-1:
-            signals[i+1] = entropy_transduction(signal, T, i, i+1)
+        # Transduce to next domain (except final domain)
+        if domain != DOMAIN_NAMES[-1]:
+            next_domain = DOMAIN_NAMES[DOMAIN_CONFIG[domain]['index'] + 1]
+            signals.append(entropy_transduction(signal, T, domain, next_domain))
     
     return np.array(signals), residues
 
 # ==================================================================
-# Validation metrics
+# Analysis utilities
 # ==================================================================
 
-def calculate_snr(signals, t):
-    """Domain-specific SNR calculation"""
-    snr = []
-    domain_windows = [(100, 400), (3, 8), (5, 10)]  # Gut, Blood, Brain (ms)
+def calculate_snr(
+    signals: np.ndarray, 
+    t: np.ndarray
+) -> List[float]:
+    """
+    Calculate domain-specific SNR in dB.
     
-    for i, (start, end) in enumerate(domain_windows):
-        idx = (t >= start) & (t <= end)
-        sig_segment = signals[i][idx]
+    Args:
+        signals: Signal array (domain x time)
+        t: Time vector
         
-        # Handle dimensionless gut signals
-        if i == 0:
+    Returns:
+        SNR values per domain
+    """
+    snr = []
+    for domain in DOMAIN_NAMES:
+        cfg = DOMAIN_CONFIG[domain]
+        start, end = cfg['window']
+        idx = (t >= start) & (t <= end)
+        sig_segment = signals[cfg['index'], idx]
+        
+        # Gut uses different analysis (dimensionless)
+        if domain == 'GUT':
             signal_power = np.mean(sig_segment**2)
             noise_power = np.var(sig_segment)
-        # Electrical domains
         else:
+            # Electrical domains use smoothed signal
             smoothed = np.convolve(sig_segment, np.ones(10)/10, 'same')
             signal_power = np.mean(sig_segment**2)
             noise_power = np.var(sig_segment - smoothed)
@@ -159,104 +311,182 @@ def calculate_snr(signals, t):
     return snr
 
 # ==================================================================
-# Main script
+# Validation and visualisation 
+# ==================================================================
+
+def run_validation(
+    snr_hh: List[float], 
+    snr_tdc: List[float],
+    snr_hh_hot: List[float], 
+    snr_tdc_hot: List[float],
+    param_reduction: float
+) -> bool:
+    """
+    Run physics validation checks.
+    
+    Args:
+        snr_*: SNR values for each domain
+        param_reduction: Parameter reduction percentage
+        
+    Returns:
+        True if all validations pass
+    """
+    try:
+        # 1. Parameter reduction (min 37.5%)
+        assert param_reduction >= 37.5, (
+            f"Param reduction {param_reduction:.1f}% < 37.5%")
+        
+        # 2. SNR degradation tolerance
+        tolerance = {
+            'GUT': -1.5, 
+            'BLOOD': -0.5, 
+            'BRAIN': 0.0
+        }
+        for domain in DOMAIN_NAMES:
+            idx = DOMAIN_CONFIG[domain]['index']
+            snr_gain = snr_tdc[idx] - snr_hh[idx]
+            assert snr_gain > tolerance[domain], (
+                f"{domain} SNR gain {snr_gain:.1f}dB ≤ {tolerance[domain]}dB")
+        
+        # 3. Thermal resilience
+        thermal_gains = [
+            snr_tdc_hot[DOMAIN_CONFIG[d]['index']] - 
+            snr_hh_hot[DOMAIN_CONFIG[d]['index']] 
+            for d in DOMAIN_NAMES
+        ]
+        avg_gain = np.mean(thermal_gains)
+        assert avg_gain > 2.0, f"Avg thermal gain {avg_gain:.1f}dB ≤ 2dB"
+        
+        # 4. Brain SNR preservation
+        brain_gain = thermal_gains[DOMAIN_CONFIG['BRAIN']['index']]
+        assert brain_gain > 1.0, f"Brain thermal gain {brain_gain:.1f}dB ≤ 1dB"
+        
+        print("✅ VALIDATION PASSED")
+        return True
+        
+    except AssertionError as e:
+        print(f"❌ VALIDATION FAILED: {e}")
+        return False
+
+def generate_propagation_plot(
+    t: np.ndarray, 
+    signals: np.ndarray, 
+    residues: List[np.ndarray],
+    model_name: str
+) -> str:
+    """
+    Generate domain propagation plot.
+    
+    Args:
+        t: Time vector
+        signals: Signals per domain
+        residues: Residues per domain
+        model_name: Model identifier
+        
+    Returns:
+        Filename base for saved plots
+    """
+    fig, axs = plt.subplots(len(DOMAIN_NAMES), 1, figsize=(12, 10), sharex=True)
+    
+    for i, domain in enumerate(DOMAIN_NAMES):
+        ax = axs[i]
+        cfg = DOMAIN_CONFIG[domain]
+        idx = cfg['index']
+        
+        # Plot signal and residue
+        ax.plot(t, signals[idx], 'b-', label=f'{domain} Signal', lw=1.5)
+        ax.plot(t, residues[idx], 'g--', label=f'{domain} Residue', alpha=0.7)
+        
+        # Formatting
+        ax.set_ylabel('Signal' if domain=='GUT' else 'Potential (mV)')
+        ax.legend(loc='upper right')
+        ax.grid(alpha=0.3)
+        ax.set_xlim(0, 100)  # Focus on first 100ms
+        
+        if i == 0:
+            ax.set_title(f"{model_name} Propagation: Gut → Blood → Brain")
+
+    plt.xlabel("Time (ms)")
+    plt.tight_layout()
+    
+    # Save figure
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    base_name = f"{model_name.lower()}_propagation_{timestamp}"
+    plt.savefig(f"{base_name}.pdf", dpi=300, bbox_inches='tight')
+    plt.savefig(f"{base_name}.png", dpi=300)
+    
+    return base_name
+
+# ==================================================================
+# Main simulation
 # ==================================================================
 if __name__ == "__main__":
-    # Time vector (extended for gut dynamics)
-    t = np.linspace(0, 500, 5000)  # 500ms simulation
-    
+    # Extended time vector for gut dynamics (500ms)
+    t = np.linspace(0, 500, 5000)
+
     # --- Model parameters ---
-    # Baseline HH-Langevin
+    # HH-Langevin parameters
     hh_params = {
-        'noise_scale': [0.3, 0.4, 0.2]  # Gut, Blood, Brain
+        'noise_scale': {
+            'GUT': 0.3,
+            'BLOOD': 0.4,
+            'BRAIN': 0.2
+        }
     }
     
-    # TDC parameters (domain-optimized)
+    # TDC parameters
     tdc_params = {
-        'Dr': [0.1, 0.2, 0.3],      # Persistence increase downstream
-        'S': [0.25, 0.18, 0.12],     # Entropy decrease downstream
-        'I': [0.8, 1.2, 1.5],        # Signal strength (dimensionless)
-        'r0': [0.4, 0.3, 0.2],       # Residue amplitude
-        'alpha': [1/200, 1/100, 1/50] # Residue decay (slower in brain)
+        'Dr': {'GUT': 0.1, 'BLOOD': 0.2, 'BRAIN': 0.3},
+        'S': {'GUT': 0.25, 'BLOOD': 0.18, 'BRAIN': 0.12},
+        'I': {'GUT': 0.8, 'BLOOD': 1.2, 'BRAIN': 1.5},
+        'r0': {'GUT': 0.4, 'BLOOD': 0.3, 'BRAIN': 0.2},
+        'alpha': {'GUT': 1/200, 'BLOOD': 1/100, 'BRAIN': 1/50}
     }
-    
-    # --- Simulate at 37°C ---
-    V_hh, _ = propagate_signal(t, hh_langevin_domain, hh_params, T_env)
-    V_tdc, residues = propagate_signal(t, tdc_domain, tdc_params, T_env)
-    
-    # --- Thermal stress Test (50°C) ---
-    V_hh_hot, _ = propagate_signal(t, hh_langevin_domain, hh_params, T_high)
-    V_tdc_hot, _ = propagate_signal(t, tdc_domain, tdc_params, T_high)
 
-    # ==================================================================
+    # Simulate at standard temperature
+    print("Running simulations at 37°C...")
+    V_hh, _ = propagate_signal(t, solve_hh_domain, hh_params, T_ENV)
+    V_tdc, residues_tdc = propagate_signal(t, tdc_domain, tdc_params, T_ENV)
+
+    # Thermal stress test 
+    print("Running simulations at 50°C...")
+    V_hh_hot, _ = propagate_signal(t, solve_hh_domain, hh_params, T_HIGH)
+    V_tdc_hot, _ = propagate_signal(t, tdc_domain, tdc_params, T_HIGH)
+
     # SNR calculations
-    # ==================================================================
-
     snr_hh = calculate_snr(V_hh, t)
     snr_tdc = calculate_snr(V_tdc, t)
     snr_hh_hot = calculate_snr(V_hh_hot, t)
     snr_tdc_hot = calculate_snr(V_tdc_hot, t)
-
-    # ==================================================================
+    
     # Parameter reduction
-    # ==================================================================
-
-    hh_param_count = 8 * N  # 8 params per domain
-    tdc_param_count = 5 * N  # 5 TDC params per domain
+    hh_param_count = 8 * len(DOMAIN_NAMES)  # 8 params/domain
+    tdc_param_count = 5 * len(DOMAIN_NAMES)  # 5 params/domain
     param_reduction = (hh_param_count - tdc_param_count) / hh_param_count * 100
     
-    print(f"\n=== TDC gut-brain validation ===")
+    # Print results
+    print("\n=== TDC GUT-BRAIN VALIDATION ===")
     print(f"PARAMETER REDUCTION: {param_reduction:.1f}%")
-    for i, domain in enumerate(DOMAINS):
-        print(f"{domain}:")
-        print(f"  37°C: HH={snr_hh[i]:.1f}dB, TDC={snr_tdc[i]:.1f}dB → Δ={snr_tdc[i]-snr_hh[i]:.1f}dB")
-        print(f"  50°C: HH={snr_hh_hot[i]:.1f}dB, TDC={snr_tdc_hot[i]:.1f}dB → Δ={snr_tdc_hot[i]-snr_hh_hot[i]:.1f}dB")
-
-# ==================================================================
-# Physics validation
-# ==================================================================
-
-    validation_passed = True
-    try:
-        # 1. Parameter reduction (min 37.5%)
-        assert param_reduction >= 37.5, f"Param reduction {param_reduction:.1f}% < 37.5%"
-        
-        # 2. SNR tolerance per domain
-        tolerance = [-1.5, -0.5, 0]  # Gut, Blood, Brain (dB)
-        for i in range(N):
-            assert (snr_tdc[i] - snr_hh[i]) > tolerance[i], f"Domain {DOMAINS[i]} SNR degraded"
-        
-        # 3. Thermal resilience (avg >2dB gain)
-        thermal_gain = np.mean([snr_tdc_hot[i] - snr_hh_hot[i] for i in range(N)])
-        assert thermal_gain > 2.0, f"Thermal gain {thermal_gain:.1f}dB ≤ 2dB"
-        
-    except AssertionError as e:
-        print(f"❌ Validation failed: {e}")
-        validation_passed = False
-    else:
-        print("✅ Validation passed")
+    for domain in DOMAIN_NAMES:
+        idx = DOMAIN_CONFIG[domain]['index']
+        print(f"\n{domain}:")
+        print(f"  37°C: HH={snr_hh[idx]:.1f}dB, TDC={snr_tdc[idx]:.1f}dB → Δ={snr_tdc[idx]-snr_hh[idx]:.1f}dB")
+        print(f"  50°C: HH={snr_hh_hot[idx]:.1f}dB, TDC={snr_tdc_hot[idx]:.1f}dB → Δ={snr_tdc_hot[idx]-snr_hh_hot[idx]:.1f}dB")
 
     # ==================================================================
-    # Save plots
+    # Validate and plot
     # ==================================================================
+    validation_passed = run_validation(
+        snr_hh, snr_tdc, 
+        snr_hh_hot, snr_tdc_hot,
+        param_reduction
+    )
+    hh_plot_base = generate_propagation_plot(t, V_hh, [np.zeros_like(t)]*3, "HH")
+    tdc_plot_base = generate_propagation_plot(t, V_tdc, residues_tdc, "TDC")
+    
+    print(f"\nSaved HH plots: {hh_plot_base}.pdf/png")
+    print(f"Saved TDC plots: {tdc_plot_base}.pdf/png")
 
-    fig, axs = plt.subplots(N, 1, figsize=(12, 10), sharex=True)
-    for i, domain in enumerate(DOMAINS):
-        # Plot signals
-        axs[i].plot(t, V_hh[i], 'b-', label=f'HH {domain}', lw=1.5)
-        axs[i].plot(t, V_tdc[i], 'r--', label=f'TDC {domain}', lw=1.5)
-        axs[i].plot(t, residues[i], 'g:', label=f'TDC Residue', alpha=0.7)
-        
-        # Formatting
-        axs[i].set_ylabel('Signal' if i==0 else 'Potential (mV)')
-        axs[i].legend()
-        axs[i].grid(True, alpha=0.3)
-        if i == 0:
-            axs[i].set_title("TDC multi-domain propagation: gut → blood → brain")
-    
-    plt.xlabel("Time (ms)")
-    plt.tight_layout()
-    
     # Save results
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     plt.savefig(f"tdc_eg2_results_{timestamp}.pdf", dpi=300, bbox_inches='tight')
