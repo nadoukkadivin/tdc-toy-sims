@@ -35,29 +35,29 @@ This example demonstrates the Tidal-Drift Communication (TDC) framework for subs
 | α         | Residue decay rate (s⁻¹)        | 1/200, 1/100, 1/50               |
 
 **Validation protocol:**
-- Simulate propagation through all three domains at 37°C and under 50°C “stress.”
+- Simulate propagation through all three domains at 37°C and under 50°C “stress”;
 - Calculate SNR in domain-appropriate time windows (Gut: 100–400ms, Blood: 3–8ms, Brain: 5–10ms).
-- Report parameter reduction (8→5 params/domain), SNR change, and thermal resilience.
-- Benchmark: Signal-to-noise ratio (SNR) is calculated in a physiologically relevant analysis window for each domain: gut: 100–400ms (reflecting slow chemical waves), blood: 3–8ms (intermediate transmission),vbrain: 5–10ms (rapid neural activity)
+- Report parameter reduction (8→5 params/domain), SNR change, and thermal resilience;
+- Benchmark: Signal-to-noise ratio (SNR) is calculated in a physiologically relevant analysis window for each domain: gut: 100–400ms (reflecting slow chemical waves), blood: 3–8ms (intermediate transmission),vbrain: 5–10ms (rapid neural activity);
 - **Criteria:** **1.** parameter reduction: At least 37.5% fewer model parameters in TDC vs. baseline HH+Langevin (8 → 5 per domain);  **2.** signal robustness: for 37°C (normal), SNR for TDC is ≥ baseline SNR in brain/blood and no worse than -1.5dB in gut; **3.** thermal resilience: under 50°C thermal stress, the domain-averaged SNR improvement (TDC minus baseline) must exceed +2dB.
 
 ## **Expected results**  
 
 Parameter reduction: 37.5%
-Gut:
+**Gut:**
   37°C: HH=7.4dB, TDC=8.1dB → Δ=+0.7dB
   50°C: HH=3.3dB, TDC=6.0dB → Δ=+2.7dB
-Blood:
+**Blood:**
   37°C: HH=11.1dB, TDC=10.9dB → Δ=-0.2dB
   50°C: HH=7.2dB, TDC=10.1dB → Δ=+2.9dB
-Brain:
+**Brain:**
   37°C: HH=14.7dB, TDC=14.8dB → Δ=+0.1dB
   50°C: HH=8.5dB, TDC=11.6dB → Δ=+3.1dB
 
 ✅ Validation passed
 Saved: tdc_eg2_results_YYYYMMDD_HHMMSS.pdf/png
 ```
-- *Interpretation:*  
+- **Interpretation:**  
   - TDC achieves ≥37.5% parameter reduction;
   - SNR is generally preserved per domain (slightly lower or higher by ≤ 1.5dB under homeostasis);
   - TDC shows a domain-averaged SNR gain >2dB under thermal stress.
@@ -82,11 +82,11 @@ Saved: tdc_eg2_results_YYYYMMDD_HHMMSS.pdf/png
 ## **References & parameter sources**
 
 **Biophysical models:**
-   - Hodgkin & Huxley (1952) “A quantitative description of membrane current and its application to conduction and excitation in nerve”, Journal of Physiology, 117(4) 500–544 https://pmc.ncbi.nlm.nih.gov/articles/PMC1392413/;
-   - Gerstner et al (2014) "Neuronal Dynamics: From Single Neurons to Networks and Models of Cognition" (https://neuronaldynamics.epfl.ch/online/Ch2.S2.html);
-   - Hille (2001) "Ion Channels of Excitable Membranes", 3rd Edition, Sinauer Associates (https://archive.org/details/ionchannelsofexc0003hill);
-   - Yang & Zheng (2014) “Temperature dependence of ion channel kinetics”, Channels, 8(4) 308–321 (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2891698/);
-   - Bertram (2021) “Channel Noise in Neurons” (https://www.math.fsu.edu/~bertram/course_papers/Fall21/channel_noise.pdf).
+   - **Hodgkin & Huxley** (1952) “A quantitative description of membrane current and its application to conduction and excitation in nerve”, Journal of Physiology, 117(4) 500–544 https://pmc.ncbi.nlm.nih.gov/articles/PMC1392413/;
+   - Gerstner et al (2014) **"Neuronal Dynamics: From Single Neurons to Networks and Models of Cognition"** (https://neuronaldynamics.epfl.ch/online/Ch2.S2.html);
+   - Hille (2001) **"Ion Channels of Excitable Membranes"**, 3rd Edition, Sinauer Associates (https://archive.org/details/ionchannelsofexc0003hill);
+   - Yang & Zheng (2014) **“Temperature dependence of ion channel kinetics”**, Channels, 8(4) 308–321 (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2891698/);
+   - Bertram (2021) **“Channel Noise in Neurons”**(https://www.math.fsu.edu/~bertram/course_papers/Fall21/channel_noise.pdf).
 
 **Entropy/transduction theory:**
 - Prigogine (1977) *Dissipative Structures in Energy and Matter*;
