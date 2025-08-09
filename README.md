@@ -6,7 +6,7 @@ This repository demonstrates a quantitative comparison between classic biophysic
 
 ## **Contents**
 
-- **`tdc_eg1_toysim.py`:** Python code for running both baseline (HH+Langevin) and TDC models, automated benchmarking, and figure generation.
+- **`tdc_eg1_toysim.py`:** Python code for running both baseline (HH+Langevin) and TDC models, automated benchmarking and figure generation.
 - **`README.md`:** This documentation outlines the context, validation protocol and result interpretation.
 - (optional) Output figures: Publication-quality **`.pdf`** and **`.png`** are auto-saved on each run.
 
