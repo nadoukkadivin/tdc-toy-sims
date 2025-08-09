@@ -32,8 +32,8 @@ This repository demonstrates a quantitative comparison between classic biophysic
 | α         | residue decay rate (1/50ms ~ Ca²⁺ decay timescale)           | 20 s⁻¹          |
 
 **Validation protocol:**
-- Simulate action potential (AP)-like signals using both HH+Langevin (10 param) and TDC (5 param) at 37°C (physiological) and 50°C (thermal stress).
-- **Benchmark:** signal-to-noise ratio (SNR) calculated in the main post-AP window ( ms).
+- Simulate action potential (AP)-like signals using both HH+Langevin (10 param) and TDC (5 param) at 37°C (physiological) and 50°C (thermal stress);
+- **Benchmark:** signal-to-noise ratio (SNR) calculated in the main post-AP window ( ms);
 - **Criteria:** **1.** parameter reduction ≥50%; **2.** TDC delivers >2dB SNR gain over baseline at 50°C.
 
 ## **Expected results**
