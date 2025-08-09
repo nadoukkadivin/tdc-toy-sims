@@ -17,7 +17,7 @@ This repository demonstrates a quantitative comparison between classic biophysic
 
 ## **Key improvements & validation metrics**
 
-- **Biophysical grounding:**
+**Biophysical grounding:**
 - **AP width / τ_d = 1.5ms:** Matches mammalian experimental data;
 - **Temp scaling (Q10=3):** Standard for ion channel kinetics;
 - **Noise term:** Realistic Johnson–Nyquist noise, scales with √T.
