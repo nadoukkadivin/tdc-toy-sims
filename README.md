@@ -28,11 +28,11 @@ This example demonstrates the Tidal-Drift Communication (TDC) framework for subs
 
 | parameter | description                     | example values (gut/blood/brain) |
 |-----------|---------------------------------|----------------------------------|
-| Dr        | Drift/persistence scaling       | 0.1, 0.2, 0.3                    |
-| S         | Thermodynamic entropy scaling   | 0.25, 0.18, 0.12                 |
-| I         | Signal amplitude (dimensionless)| 0.8, 1.2, 1.5                    |
-| r₀        | Residue memory amplitude        | 0.4, 0.3, 0.2                    |
-| α         | Residue decay rate (s⁻¹)        | 1/200, 1/100, 1/50               |
+| Dr        | drift/persistence scaling       | 0.1, 0.2, 0.3                    |
+| S         | thermodynamic entropy scaling   | 0.25, 0.18, 0.12                 |
+| I         | signal amplitude (dimensionless)| 0.8, 1.2, 1.5                    |
+| r₀        | residue memory amplitude        | 0.4, 0.3, 0.2                    |
+| α         | residue decay rate (s⁻¹)        | 1/200, 1/100, 1/50               |
 
 **Validation protocol:**
 - Simulate propagation through all three domains at 37°C and under 50°C “stress”;
