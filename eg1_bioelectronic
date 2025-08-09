@@ -21,7 +21,7 @@ Cm = 1e-6           # Membrane capacitance (F/cm²)
 gK0 = 36e-3         # Max K+ conductance (S/cm²)
 
 # ==================================================================
-# BASELINE: Hodgkin-Huxley + Langevin (10 params)
+# Baseline: Hodgkin-Huxley + Langevin (10 params)
 # ==================================================================
 
 def hh_langevin(V, t, T, noise_scale):
@@ -83,6 +83,7 @@ def calculate_snr(V, t, t_window=[5,10]):
 # ==================================================================
 # Main script
 # ==================================================================
+
 if __name__ == "__main__":
     # Time vector (ms scale)
     t = np.linspace(0, 25, 1000)
@@ -106,6 +107,7 @@ if __name__ == "__main__":
     # ==================================================================
     # NR calculations
     # ==================================================================
+
     snr_base = calculate_snr(V_base, t)
     snr_tdc = calculate_snr(V_tdc, t)
     snr_base_high = calculate_snr(V_base_high, t)
@@ -119,6 +121,7 @@ if __name__ == "__main__":
     # ==================================================================
     # Benchmark validation
     # ==================================================================
+
     validation_passed = False
     baseline_param_count = 10  # Full hybrid HH+Langevin parameters
     tdc_param_count = 5       # TDC core parameters
@@ -176,6 +179,12 @@ if __name__ == "__main__":
     print(f"Saved figures: {pdf_filename}, {png_filename}")
 
     plt.show()
+
+    # Save results
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    plt.savefig(f"tdc_eg2_results_{timestamp}.pdf", dpi=300, bbox_inches='tight')
+    plt.savefig(f"tdc_eg2_results_{timestamp}.png", dpi=300)
+    print(f"Saved: tdc_eg2_results_{timestamp}.pdf/png")
     
     # CI/CD Exit Code Handling
     sys.exit(0 if validation_passed else 1)
