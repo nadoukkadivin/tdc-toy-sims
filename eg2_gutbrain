@@ -18,7 +18,10 @@ import sys
 
 np.random.seed(42)  # Reproducibility
 
-# ==== Domain physics ====
+# ==================================================================
+# Domain physics 
+# ==================================================================
+
 DOMAINS = ['Gut', 'Blood', 'Brain']
 N = len(DOMAINS)
 k_B = 1.38e-23
@@ -30,14 +33,20 @@ T_high = 323  # 50°C
 TAU_D = [2.0, 0.5, 0.0015]  # Gut(2s), Blood(0.5s), Brain(1.5ms)
 Q10_FACTORS = [1.8, 2.5, 3.0]  # Temperature sensitivity
 
-# ==== Cross-domain transduction ====
+# ==================================================================
+# Cross-domain transduction
+# ==================================================================
+
 def entropy_transduction(signal, T, domain_from, domain_to):
     """Signal transduction using entropy gradients"""
     dS = Q10_FACTORS[domain_to] / Q10_FACTORS[domain_from]
     loss = 0.3 + 0.1 * np.random.normal()  # 30±10% loss
     return signal * np.sqrt(dS) * (1 - loss)
 
-# ==== Biophysical models ====
+# ==================================================================
+# Biophysical models
+# ==================================================================
+
 def hh_langevin_domain(V, t, T, noise_scale, domain_idx):
     """Domain-adapted Hodgkin-Huxley + Langevin"""
     phi = Q10_FACTORS[domain_idx] ** ((T - 298) / 10)
@@ -71,7 +80,10 @@ def hh_langevin_domain(V, t, T, noise_scale, domain_idx):
     noise = noise_scale * np.sqrt(4 * k_B * T * Cm) * np.random.normal()
     return - (INa + IK + IL) + noise
 
-# ==== TDC core model ====
+# ==================================================================
+# TDC core model 
+# ==================================================================
+
 def tdc_domain(t, Dr, S, I, r0, alpha, T, domain_idx):
     """TDC substrate-agnostic formulation"""
     τ_d = TAU_D[domain_idx]
@@ -92,7 +104,10 @@ def tdc_domain(t, Dr, S, I, r0, alpha, T, domain_idx):
     residue = r0 * np.exp(-alpha * t * phi)
     return persistence + entropy + residue
 
-# ==== Signal propagation ====
+# ==================================================================
+# Signal propagation
+# ==================================================================
+
 def propagate_signal(t, model_func, params, T):
     """Cross-domain propagation with TDC physics"""
     signals = []
@@ -117,7 +132,10 @@ def propagate_signal(t, model_func, params, T):
     
     return np.array(signals), residues
 
-# ==== Validation metrics ====
+# ==================================================================
+# Validation metrics
+# ==================================================================
+
 def calculate_snr(signals, t):
     """Domain-specific SNR calculation"""
     snr = []
@@ -140,7 +158,9 @@ def calculate_snr(signals, t):
         snr.append(10 * np.log10(signal_power / noise_power))
     return snr
 
-# ==== Main simulation ====
+# ==================================================================
+# Main script
+# ==================================================================
 if __name__ == "__main__":
     # Time vector (extended for gut dynamics)
     t = np.linspace(0, 500, 5000)  # 500ms simulation
@@ -167,14 +187,20 @@ if __name__ == "__main__":
     # --- Thermal stress Test (50°C) ---
     V_hh_hot, _ = propagate_signal(t, hh_langevin_domain, hh_params, T_high)
     V_tdc_hot, _ = propagate_signal(t, tdc_domain, tdc_params, T_high)
-    
-    # --- SNR calculations ---
+
+    # ==================================================================
+    # SNR calculations
+    # ==================================================================
+
     snr_hh = calculate_snr(V_hh, t)
     snr_tdc = calculate_snr(V_tdc, t)
     snr_hh_hot = calculate_snr(V_hh_hot, t)
     snr_tdc_hot = calculate_snr(V_tdc_hot, t)
-    
-    # --- Parameter reduction ---
+
+    # ==================================================================
+    # Parameter reduction
+    # ==================================================================
+
     hh_param_count = 8 * N  # 8 params per domain
     tdc_param_count = 5 * N  # 5 TDC params per domain
     param_reduction = (hh_param_count - tdc_param_count) / hh_param_count * 100
@@ -185,8 +211,11 @@ if __name__ == "__main__":
         print(f"{domain}:")
         print(f"  37°C: HH={snr_hh[i]:.1f}dB, TDC={snr_tdc[i]:.1f}dB → Δ={snr_tdc[i]-snr_hh[i]:.1f}dB")
         print(f"  50°C: HH={snr_hh_hot[i]:.1f}dB, TDC={snr_tdc_hot[i]:.1f}dB → Δ={snr_tdc_hot[i]-snr_hh_hot[i]:.1f}dB")
-    
-    # --- Physics validation ---
+
+# ==================================================================
+# Physics validation
+# ==================================================================
+
     validation_passed = True
     try:
         # 1. Parameter reduction (min 37.5%)
@@ -206,8 +235,11 @@ if __name__ == "__main__":
         validation_passed = False
     else:
         print("✅ Validation passed")
-    
-    # --- Plotting ---
+
+    # ==================================================================
+    # Save plots
+    # ==================================================================
+
     fig, axs = plt.subplots(N, 1, figsize=(12, 10), sharex=True)
     for i, domain in enumerate(DOMAINS):
         # Plot signals
