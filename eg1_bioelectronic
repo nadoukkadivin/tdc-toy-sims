@@ -9,39 +9,60 @@ import numpy as np
 from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 from datetime import datetime
-import sys  # Added for validation exit codes
+import sys
 
-np.random.seed(0)  # Set the random seed for reproducibility
+# Set random seed for reproducibility
+np.random.seed(0)
 
+# ==================================================================
 # Biophysical constants
-k_B = 1.38e-23      # Boltzmann constant (J/K)
-T_room = 310        # Kelvin (37°C)
-T_high = 323        # Kelvin (50°C)
-Cm = 1e-6           # Membrane capacitance (F/cm²)
-gK0 = 36e-3         # Max K+ conductance (S/cm²)
+# ==================================================================
+K_B = 1.38e-23      # Boltzmann constant (J/K)
+T_ROOM = 310        # Kelvin (37°C)
+T_HIGH = 323        # Kelvin (50°C)
+CM = 1e-6           # Membrane capacitance (F/cm²)
+GK0 = 36e-3         # Max K+ conductance (S/cm²)
+TAU_D = 1.5e-3      # AP decay time (s)
+Q10 = 3.0           # Temperature coefficient
+T_REF = 298         # Reference temperature (K)
 
 # ==================================================================
-# Baseline: Hodgkin-Huxley + Langevin (10 params)
+# Model implementations
 # ==================================================================
 
-def hh_langevin(V, t, T, noise_scale):
-    # Temperature scaling factor (Q10=3)
-    phi = 3.0**((T - 298)/10)
+def temperature_scaling(T: float) -> float:
+    """Calculate Q10 temperature scaling factor."""
+    return Q10**((T - T_REF)/10)
+
+def hh_langevin(V: float, t: float, T: float, noise_scale: float) -> float:
+    """
+    Hodgkin-Huxley model with Langevin channel noise.
     
-    # Standard HH equations (4 state variables)
-    alpha_n = phi * 0.01 * (V+55) / (1 - np.exp(-(V+55)/10))
-    beta_n = phi * 0.125 * np.exp(-(V+65)/80)
+    Args:
+        V: Membrane potential (mV)
+        t: Time point (ms)
+        T: Temperature (K)
+        noise_scale: Noise scaling factor
+        
+    Returns:
+        dV/dt: Membrane potential derivative
+    """
+    phi = temperature_scaling(T)
+    
+    # Channel kinetics
+    alpha_n = phi * 0.01 * (V + 55) / (1 - np.exp(-(V + 55)/10))
+    beta_n = phi * 0.125 * np.exp(-(V + 65)/80)
     n_inf = alpha_n/(alpha_n + beta_n)
     
-    alpha_m = phi * 0.1 * (V+40) / (1 - np.exp(-(V+40)/10))
-    beta_m = phi * 4 * np.exp(-(V+65)/18)
+    alpha_m = phi * 0.1 * (V + 40) / (1 - np.exp(-(V + 40)/10))
+    beta_m = phi * 4 * np.exp(-(V + 65)/18)
     m_inf = alpha_m/(alpha_m + beta_m)
     
-    alpha_h = phi * 0.07 * np.exp(-(V+65)/20)
-    beta_h = phi * 1/(1 + np.exp(-(V+35)/10))
+    alpha_h = phi * 0.07 * np.exp(-(V + 65)/20)
+    beta_h = phi * 1/(1 + np.exp(-(V + 35)/10))
     h_inf = alpha_h/(alpha_h + beta_h)
     
-    # Ionic currents (g in S/cm², V in mV)
+    # Ionic currents
     gNa, gK, gL = 120e-3, 36e-3, 0.3e-3
     ENa, EK, EL = 55, -77, -54
     
@@ -50,134 +71,178 @@ def hh_langevin(V, t, T, noise_scale):
     IL = gL * (V - EL)
     
     # Langevin channel noise
-    channel_noise = noise_scale * np.sqrt(4*k_B*T*gK0/Cm) * np.random.normal()
+    channel_noise = noise_scale * np.sqrt(4*K_B*T*GK0/CM) * np.random.normal()
     
-    dVdt = (-INa - IK - IL) + channel_noise
-    return dVdt
+    return (-INa - IK - IL) + channel_noise
 
-# ==================================================================
-# TDC implementation (5 param – biophysical)
-# ==================================================================
-
-def tdc_biohybrid(t, Dr, S, I, r0, alpha, T):
-    τ_d = 1.5e-3   # AP decay time (s)
-    τ_c = Dr * τ_d
-    phi = 3.0**((T - 298)/10)
-    persistence = I * np.exp(-t/τ_d) * np.cos(2*np.pi*t/τ_c)
-    eta = S * np.sqrt(2*k_B*T*Cm) * np.random.normal(size=len(t))
-    residue = r0 * np.exp(-alpha * t * phi) * np.sin(2*np.pi*0.02*t)  # 20Hz ripple
+def tdc_biohybrid(t: np.ndarray, Dr: float, S: float, I: float, 
+                  r0: float, alpha: float, T: float) -> np.ndarray:
+    """
+    TDC biohybrid signal propagation model.
+    
+    Args:
+        t: Time vector (ms)
+        Dr: Drift ratio parameter
+        S: Noise scaling factor
+        I: Signal intensity
+        r0: Residue amplitude
+        alpha: Decay coefficient
+        T: Temperature (K)
+        
+    Returns:
+        V: Simulated membrane potential (mV)
+    """
+    tau_c = Dr * TAU_D
+    phi = temperature_scaling(T)
+    
+    persistence = I * np.exp(-t/TAU_D) * np.cos(2*np.pi*t/tau_c)
+    eta = S * np.sqrt(2*K_B*T*CM) * np.random.normal(size=len(t))
+    residue = r0 * np.exp(-alpha * t * phi) * np.sin(2*np.pi*0.02*t)
+    
     return persistence + eta + residue
 
 # =================================================================
-# SNR calculation
-# ==================================================================
+# Analysis utilities
+# =================================================================
 
-def calculate_snr(V, t, t_window=[5,10]):
+def calculate_snr(V: np.ndarray, t: np.ndarray, 
+                 t_window: tuple = (5, 10), 
+                 smoothing_window: int = 10) -> float:
+    """
+    Calculate signal-to-noise ratio (SNR) in dB.
+    
+    Args:
+        V: Voltage trace
+        t: Time vector
+        t_window: Analysis time window (ms)
+        smoothing_window: Moving average window size
+        
+    Returns:
+        SNR in decibels
+    """
     idx = (t >= t_window[0]) & (t <= t_window[1])
     V_segment = V[idx]
-    smoothed = np.convolve(V_segment, np.ones(10)/10, 'same')
+    
+    # Apply smoothing to estimate signal
+    kernel = np.ones(smoothing_window)/smoothing_window
+    smoothed = np.convolve(V_segment, kernel, 'same')
+    
     signal_power = np.mean(V_segment**2)
     noise_power = np.var(V_segment - smoothed)
-    return 10*np.log10(signal_power / noise_power)
+    
+    return 10 * np.log10(signal_power / noise_power)
 
 # ==================================================================
-# Main script
+# Validation & visualization 
 # ==================================================================
 
-if __name__ == "__main__":
-    # Time vector (ms scale)
+def run_simulation() -> tuple:
+    """Run all simulation scenarios."""
     t = np.linspace(0, 25, 1000)
-
-    # 1. Run HH at room temperature
-    V_base = odeint(hh_langevin, [-65], t, args=(T_room, 0.5), hmax=0.01)
-    V_base = V_base[:,0]
-
-    # 2. Run TDC with biophysically grounded parameters
-    Dr = 0.3
-    S = 0.15
-    I = 30
-    r0 = 5
-    alpha = 1 / 50e-3
-    V_tdc = tdc_biohybrid(t, Dr, S, I, r0, alpha, T_room)
-
-    # 3. High-temperature stress test
-    V_base_high = odeint(hh_langevin, [-65], t, args=(T_high, 0.7), hmax=0.01)[:,0]
-    V_tdc_high = tdc_biohybrid(t, Dr, S*1.3, I*0.9, r0, alpha, T_high)
-
-    # ==================================================================
-    # NR calculations
-    # ==================================================================
-
-    snr_base = calculate_snr(V_base, t)
-    snr_tdc = calculate_snr(V_tdc, t)
-    snr_base_high = calculate_snr(V_base_high, t)
-    snr_tdc_high = calculate_snr(V_tdc_high, t)
-    param_reduction = (10 - 5) / 10 * 100
-
-    print(f"\nPARAMETER REDUCTION: {param_reduction:.0f}%")
-    print("SNR room temp:\n  Baseline: {:.1f} dB\n  TDC:      {:.1f} dB".format(snr_base, snr_tdc))
-    print("SNR high temp (50°C):\n  Baseline: {:.1f} dB\n  TDC:      {:.1f} dB\n".format(snr_base_high, snr_tdc_high))
     
-    # ==================================================================
-    # Benchmark validation
-    # ==================================================================
-
-    validation_passed = False
-    baseline_param_count = 10  # Full hybrid HH+Langevin parameters
-    tdc_param_count = 5       # TDC core parameters
+    # Room temperature simulations
+    V_base = odeint(hh_langevin, -65, t, args=(T_ROOM, 0.5), hmax=0.01)[:,0]
+    V_tdc = tdc_biohybrid(t, Dr=0.3, S=0.15, I=30, r0=5, alpha=1/50e-3, T=T_ROOM)
     
+    # High temperature simulations
+    V_base_high = odeint(hh_langevin, -65, t, args=(T_HIGH, 0.7), hmax=0.01)[:,0]
+    V_tdc_high = tdc_biohybrid(t, Dr=0.3, S=0.15*1.3, I=30*0.9, r0=5, alpha=1/50e-3, T=T_HIGH)
+    
+    return t, V_base, V_tdc, V_base_high, V_tdc_high
+
+def validate_results(snr_base: float, snr_tdc: float, 
+                    snr_base_high: float, snr_tdc_high: float) -> bool:
+    """Run validation checks on simulation results."""
     try:
-        # Verify parameter counts
-        assert baseline_param_count == 10, f"Expected 10 params, got {baseline_param_count}"
-        assert tdc_param_count == 5, f"Expected 5 params, got {tdc_param_count}"
+        # Parameter count validation
+        baseline_params, tdc_params = 10, 5
+        assert baseline_params == 10, f"Expected 10 params, got {baseline_params}"
+        assert tdc_params == 5, f"Expected 5 params, got {tdc_params}"
         
-        # Calculate and verify parameter reduction
-        param_reduction_val = (baseline_param_count - tdc_param_count) / baseline_param_count
-        assert param_reduction_val >= 0.5, f"Param reduction {param_reduction_val*100:.1f}% < 50%"
+        # Performance validation
+        param_reduction = (baseline_params - tdc_params) / baseline_params
+        assert param_reduction >= 0.5, f"Param reduction {param_reduction*100:.1f}% < 50%"
         
-        # Verify performance gain in thermal extremes
+        # Thermal resilience validation
         snr_gain = snr_tdc_high - snr_base_high
         assert snr_gain > 2, f"SNR gain {snr_gain:.1f}dB ≤ 2dB at 50°C"
         
         print("✅ VALIDATION PASSED")
-        print(f"  Parameter reduction: {param_reduction_val*100:.0f}%")
+        print(f"  Parameter reduction: {param_reduction*100:.0f}%")
         print(f"  High-temp SNR gain: {snr_gain:.1f}dB")
-        validation_passed = True
+        return True
         
     except AssertionError as e:
         print(f"❌ VALIDATION FAILED: {e}")
-        validation_passed = False
- 
-    # ==================================================================
-    # Save plots
-    # ==================================================================
+        return False
 
-    plt.figure(figsize=(12,8))
+def generate_plots(t: np.ndarray, results: tuple, snr_values: tuple) -> str:
+    """Generate comparison plots and return filename base."""
+    V_base, V_tdc, V_base_high, V_tdc_high = results
+    snr_base, snr_tdc, snr_base_high, snr_tdc_high = snr_values
+    
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
+    
+    # Room temperature plot
+    ax1.plot(t, V_base, 'b-', lw=2, label=f'HH-Langevin (SNR={snr_base:.1f}dB)')
+    ax1.plot(t, V_tdc, 'r--', lw=1.5, label=f'TDC (SNR={snr_tdc:.1f}dB)')
+    ax1.set_title('Bioelectronic hybrid @ 37°C', weight='bold')
+    ax1.set_ylabel('Membrane potential (mV)')
+    ax1.legend()
+    ax1.grid(alpha=0.3)
 
-    plt.subplot(2,1,1)
-    plt.plot(t, V_base, 'b-', lw=2, label=f'HH-Langevin (SNR={snr_base:.1f}dB)')
-    plt.plot(t, V_tdc, 'r--', lw=1.5, label=f'TDC (SNR={snr_tdc:.1f}dB)')
-    plt.title('Bioelectronic hybrid @ 37°C', weight='bold')
-    plt.ylabel('Membrane potential (mV)')
-    plt.legend()
-
-    plt.subplot(2,1,2)
-    plt.plot(t, V_base_high, 'b-', lw=2, label=f'HH-Langevin (SNR={snr_base_high:.1f}dB)')
-    plt.plot(t, V_tdc_high, 'r--', lw=1.5, label=f'TDC (SNR={snr_tdc_high:.1f}dB)')
-    plt.title('High temperature stress test @ 50°C', weight='bold')
-    plt.xlabel('Time (ms)')
-    plt.ylabel('Membrane potential (mV)')
-    plt.legend()
+    # High temperature plot
+    ax2.plot(t, V_base_high, 'b-', lw=2, label=f'HH-Langevin (SNR={snr_base_high:.1f}dB)')
+    ax2.plot(t, V_tdc_high, 'r--', lw=1.5, label=f'TDC (SNR={snr_tdc_high:.1f}dB)')
+    ax2.set_title('High temperature stress test @ 50°C', weight='bold')
+    ax2.set_xlabel('Time (ms)')
+    ax2.set_ylabel('Membrane potential (mV)')
+    ax2.legend()
+    ax2.grid(alpha=0.3)
 
     plt.tight_layout()
+    
+    # Save figures
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    pdf_filename = f"tdc_vs_hh_high_temp_{timestamp}.pdf"
-    png_filename = f"tdc_vs_hh_high_temp_{timestamp}.png"
-    plt.savefig(pdf_filename, dpi=300, bbox_inches='tight', 
-                metadata={'Author': 'TDC Validation', 'Title': 'Bioelectronic Hybrid Thermal Resilience'})
-    plt.savefig(png_filename, dpi=300, bbox_inches='tight')
-    print(f"Saved figures: {pdf_filename}, {png_filename}")
+    base_name = f"tdc_vs_hh_thermal_{timestamp}"
+    
+    plt.savefig(f"{base_name}.pdf", dpi=300, bbox_inches='tight', 
+                metadata={'Author': 'TDC Validation', 
+                         'Title': 'Bioelectronic Hybrid Thermal Resilience'})
+    plt.savefig(f"{base_name}.png", dpi=300)
+    
+    return base_name
 
+# ==================================================================
+# Main execution
+# ==================================================================
+if __name__ == "__main__":
+    # Run simulations
+    t, V_base, V_tdc, V_base_high, V_tdc_high = run_simulation()
+    
+    # Calculate SNRs
+    snr_base = calculate_snr(V_base, t)
+    snr_tdc = calculate_snr(V_tdc, t)
+    snr_base_high = calculate_snr(V_base_high, t)
+    snr_tdc_high = calculate_snr(V_tdc_high, t)
+    
+    # Print results
+    print(f"\nPARAMETER REDUCTION: {(10-5)/10*100:.0f}%")
+    print("SNR room temp:")
+    print(f"  Baseline: {snr_base:.1f} dB")
+    print(f"  TDC:      {snr_tdc:.1f} dB")
+    print("SNR high temp (50°C):")
+    print(f"  Baseline: {snr_base_high:.1f} dB")
+    print(f"  TDC:      {snr_tdc_high:.1f} dB\n")
+
+    # ==================================================================
+    # Validate and plot
+    # ==================================================================
+    validation_passed = validate_results(snr_base, snr_tdc, snr_base_high, snr_tdc_high)
+    base_name = generate_plots(t, (V_base, V_tdc, V_base_high, V_tdc_high), 
+                             (snr_base, snr_tdc, snr_base_high, snr_tdc_high))
+    
+    print(f"Saved figures: {base_name}.pdf, {base_name}.png")
     plt.show()
 
     # Save results
