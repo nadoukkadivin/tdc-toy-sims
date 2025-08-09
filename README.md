@@ -103,9 +103,9 @@ Saved: tdc_eg2_results_YYYYMMDD_HHMMSS.pdf/png
 
 ## **Reproducibility & validation **
 
-- All code seed values are fixed for exact result replication.
-- Domain-specific SNR windows ensure meaningful performance metrics.
-- Automated assertions check param reduction, SNR consistency, and thermal performance.
+- All code seed values are fixed for exact result replication;
+- Domain-specific SNR windows ensure meaningful performance metrics;
+- Automated assertions check param reduction, SNR consistency, and thermal performance;
 - Plots and outputs are timestamped for provenance.
 
 ## **Customization/extension**
