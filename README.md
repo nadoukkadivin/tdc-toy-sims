@@ -121,7 +121,3 @@ For questions, bugs or collab: [Nadoukká Divin], [Rhythm and density], [nadoukk
 Image: “Bioelectronic hybrid resilience” (insert sample_figure.png here)
 **Top**: 37°C comparison (baseline vs TDC)
 **Bottom**: 50°C stress test showing TDC's SNR advantage)
-
-**In summary:**  
-
-This README gives meaningful context, clearly documents parameter mapping and scientific roots, and sets up anyone to understand, run, and validate your TDC eg1 example with confidence.
