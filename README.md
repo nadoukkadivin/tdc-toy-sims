@@ -12,17 +12,17 @@ This example demonstrates the Tidal-Drift Communication (TDC) framework for subs
 
 ## **Rationale**
 
-- **Hybrid modeling challenge:** Biological signals often traverse distinct “substrates” (chemical → blood → neural), each with unique physics, scales, and dissipation.
-- **Classic models (HH+Langevin):** Effective for electrical domains but not dimensionless chemical or biochemical regimes.
+- **Hybrid modeling challenge:** Biological signals often traverse distinct “substrates” (chemical → blood → neural), each with unique physics, scales, and dissipation;
+- **Classic models (HH+Langevin):** Effective for electrical domains but not dimensionless chemical or biochemical regimes;
 - **TDC model advantages:** Uses five core substrate-agnostic parameters for each domain (Dr, S, I, r₀, α), supports entropy-informed interface transduction, and models residue memory transfer.
 
 ## **Key features & validation metrics**
 
 **Domain physics:**
-- **Timescales:** Gut (2s), blood (0.5s), brain (1.5ms)
-- **Q10 scaling:** Domain-specific temperature dependence
-- **Interface coupling:** Entropy-driven, not arbitrary percent loss
-- **Residue memory:** Physically accumulates and influences downstream domains
+- **Timescales:** Gut (2s), blood (0.5s), brain (1.5ms);
+- **Q10 scaling:** Domain-specific temperature dependence;
+- **Interface coupling:** Entropy-driven, not arbitrary percent loss;
+- **Residue memory:** Physically accumulates and influences downstream domains.
 
 **TDC parameter mapping:**
 
@@ -38,8 +38,8 @@ This example demonstrates the Tidal-Drift Communication (TDC) framework for subs
 - Simulate propagation through all three domains at 37°C and under 50°C “stress”;
 - Calculate SNR in domain-appropriate time windows (Gut: 100–400ms, Blood: 3–8ms, Brain: 5–10ms).
 - Report parameter reduction (8→5 params/domain), SNR change, and thermal resilience;
-- Benchmark: Signal-to-noise ratio (SNR) is calculated in a physiologically relevant analysis window for each domain: gut: 100–400ms (reflecting slow chemical waves), blood: 3–8ms (intermediate transmission),vbrain: 5–10ms (rapid neural activity);
-- **Criteria:** **1.** parameter reduction: At least 37.5% fewer model parameters in TDC vs. baseline HH+Langevin (8 → 5 per domain);  **2.** signal robustness: for 37°C (normal), SNR for TDC is ≥ baseline SNR in brain/blood and no worse than -1.5dB in gut; **3.** thermal resilience: under 50°C thermal stress, the domain-averaged SNR improvement (TDC minus baseline) must exceed +2dB.
+- **Benchmark:** Signal-to-noise ratio (SNR) is calculated in a physiologically relevant analysis window for each domain: **gut:** 100–400ms (reflecting slow chemical waves), **blood:** 3–8ms (intermediate transmission), **brain:** 5–10ms (rapid neural activity);
+- **Criteria:** **1.** parameter reduction: At least 37.5% fewer model parameters in TDC vs. baseline HH+Langevin (8 → 5 per domain); **2.** signal robustness: for 37°C (normal), SNR for TDC is ≥ baseline SNR in brain/blood and no worse than -1.5dB in gut; **3.** thermal resilience: under 50°C thermal stress, the domain-averaged SNR improvement (TDC minus baseline) must exceed +2dB.
 
 ## **Expected results**  
 
@@ -57,10 +57,7 @@ Parameter reduction: 37.5%
 ✅ Validation passed
 Saved: tdc_eg2_results_YYYYMMDD_HHMMSS.pdf/png
 ```
-- **Interpretation:**  
-  - TDC achieves ≥37.5% parameter reduction;
-  - SNR is generally preserved per domain (slightly lower or higher by ≤ 1.5dB under homeostasis);
-  - TDC shows a domain-averaged SNR gain >2dB under thermal stress.
+- **Interpretation:** **1.** TDC achieves ≥37.5% parameter reduction; **2.** SNR is generally preserved per domain (slightly lower or higher by ≤ 1.5dB under homeostasis); **3.** TDC shows a domain-averaged SNR gain >2dB under thermal stress.
 
 ## **How to run**
 
@@ -113,9 +110,9 @@ Saved: tdc_eg2_results_YYYYMMDD_HHMMSS.pdf/png
 
 ## **Customization/extension**
 
-- Adjust any domain parameters to simulate other hybrid chains (vagus, sensor–bio, etc.).
-- Tune entropy_transduction to explore non-ideal coupling or pathologies.
-- Extend to more domains: increase `N`, generalize params.
+- Adjust any domain parameters to simulate other hybrid chains (vagus, sensor–bio etc);
+- Tune entropy_transduction to explore non-ideal coupling or pathologies;
+- Extend to more domains: increase `N`, generalise params.
 
 ## **Contact**
 
