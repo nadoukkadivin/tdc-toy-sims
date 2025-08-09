@@ -2,14 +2,14 @@
 toy sims for wip tidal drift communication (tdc) ex
 
 ### **What is this?**
-This example demonstrates the Tidal-Drift Communication (TDC) framework for substrate-agnostic, multi-domain signal propagation through a chain representing **gut → blood → brain**. It benchmarks TDC’s compactness and resilience against a domain-adapted Hodgkin-Huxley + Langevin baseline, including realistic entropy-driven interface coupling and residue memory transfer.
+This example demonstrates the Tidal-Drift Communication (TDC) framework for substrate-agnostic, multi-domain signal propagation through a chain representing **gut → blood → brain**. It benchmarks TDC’s compactness and resilience against a domain-adapted Hodgkin-Huxley + Langevin baseline, including entropy-driven interface coupling and residue memory transfer.
 
 ***
 
 ## **Contents**
 
-- **`tdc_eg2_toysim.py`** — Python code for multi-domain chain simulation, SNR benchmarking, automated thermal resilience validation, and publication-ready plots.
-- **`README.md`** — This documentation: rationale, methods, parameter mapping, validation results and references.
+- **`tdc_eg2_toysim.py`;** Python code for multi-domain chain simulation, SNR benchmarking, automated thermal resilience validation and plots.
+- **`README.md`:** This documentation outlines the context, validation protocol, result interpretation and references.
 - **(Optional)**: Saved PDF/PNG figures showing signal propagation and result metrics.
 
 ***
@@ -17,7 +17,7 @@ This example demonstrates the Tidal-Drift Communication (TDC) framework for subs
 ## **Rationale**
 
 - **Hybrid modeling challenge:** Biological signals often traverse distinct “substrates” (chemical → blood → neural), each with unique physics, scales, and dissipation.
-- **Classic models (HH+Langevin):** Effective for electrical domains, but not dimensionless chemical or biochemical regimes.
+- **Classic models (HH+Langevin):** Effective for electrical domains but not dimensionless chemical or biochemical regimes.
 - **TDC model advantages:** Uses five core substrate-agnostic parameters for each domain (Dr, S, I, r₀, α), supports entropy-informed interface transduction, and models residue memory transfer.
 
 ***
