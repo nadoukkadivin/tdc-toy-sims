@@ -94,8 +94,8 @@ Saved figures: tdc_vs_hh_high_temp_YYYYMMDD_HHMMSS.pdf, tdc_vs_hh_high_temp_YYYY
   ### **Param legend**
 | parameter   | source                       | value in code              |
 |-------------|------------------------------|----------------------------|
-| τ_d = 1.5ms | Mammalian AP duration        | `τ_d = 1.5e-3`             |
-| Q₁₀ = 3     | Ion channel Q10 scaling      | `phi = 3.0**((T - 298)/10)`|
+| τ_d = 1.5ms | mammalian AP duration        | `τ_d = 1.5e-3`             |
+| Q₁₀ = 3     | ion channel Q10 scaling      | `phi = 3.0**((T - 298)/10)`|
 | α = 20 s⁻¹  | Ca²⁺ decay in synapses       | `alpha = 1 / 50e-3`        |
 
 ## **Reproducibility & validation**
