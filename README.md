@@ -14,10 +14,8 @@ It benchmarks TDC against classical flux-based models using **Self‑Organized C
 
 ## **Rationale**
 
-- **Challenge:**  
-  Real‑world geo‑bio hybrids (vent microbes, mineral mats, electrode arrays) must operate under **extreme temperature/pressure** with intermittent gradients. Classical models need large parameter sets (~10+) to track flux, delay, and renewal processes; they often fail beyond ~500 bar, > 300 °C.
-- **TDC approach:**  
-  Uses **Dr** and a minimal set of substrate‑agnostic parameters to unify SOC criticality (event avalanche statistics) and Onsager flux gradients into one framework, cutting parameter count by ~20–40 %.
+- **Challenge:** Real‑world geo‑bio hybrids (vent microbes, mineral mats, electrode arrays) must operate under **extreme temperature/pressure** with intermittent gradients. Classical models need large parameter sets (~10+) to track flux, delay, and renewal processes; they often fail beyond ~500 bar, > 300 °C.
+- **TDC approach:** Uses **Dr** and a minimal set of substrate‑agnostic parameters to unify SOC criticality (event avalanche statistics) and Onsager flux gradients into one framework, cutting parameter count by ~20–40 %.
 - **Core novelty:**  
   - SOC exponent stability at extremes  
   - Drift ratio scaling with P/T for predictive coherence  
@@ -89,12 +87,12 @@ Files saved: geophy_bio_hybrid_350bar_YYYYMMDD_HHMMSS.pdf/png
 
 ## **References & parameter sources**
 
-– Bak et al (1987) “**Self-organized criticality**: An explanation of 1/f noise” Physical Review Letters, 59(4) 381–384 (https://link.aps.org/doi/10.1103/PhysRevLett.59.381PDF)
-– **Onsager** (1931) “Reciprocal Relations in Irreversible Processes. I” Physical Review, 37(4) 405–426 (https://users.jyu.fi/~veapaja/Statistical_Physics_B/onsager_reciprocal.relations.PhysRev.37.405.1931.pdf
-– **Geochemical–biological Onsager coefficients**: Bowman et al (2024) “A simple method for obtaining heat capacity coefficients of minerals”, American Mineralogist (https://geothermal.wvu.edu/files/d/7b3d568e-306f-4b30-b38c-0c9e077bd9f3/american-mineralogist_2024.pdf)
-– **Electroactive biofilms & EET efficiency**: (2023) “Systematic Full-Cycle Engineering Microbial Biofilms to Promote Extracellular Electron Transfer”, Proceedings of the National Academy of Sciences, 120(12) (https://pmc.ncbi.nlm.nih.gov/articles/PMC10017123/)
-– **Yellowstone earthquake swarm datasets**: National Park Service (USGS Yellowstone Observatory) “Earthquakes – Yellowstone” https://www.nps.gov/yell/learn/nature/earthquakes.htm Swarm event summary
-– **MetaSoil project—Soil microbial datasets** Delmont et al (2015) “Reconstructing rare soil microbial genomes using in situ enrichment and metagenomics” Nature Communications, 6:6519 (https://pmc.ncbi.nlm.nih.gov/articles/PMC4415585/)
+– Bak et al (1987) “***Self-organized criticality**: An explanation of 1/f noise*” Physical Review Letters, 59(4) 381–384 (https://link.aps.org/doi/10.1103/PhysRevLett.59.381PDF)
+– **Onsager** (1931) “*Reciprocal Relations in Irreversible Processes. I*” Physical Review, 37(4) 405–426 (https://users.jyu.fi/~veapaja/Statistical_Physics_B/onsager_reciprocal.relations.PhysRev.37.405.1931.pdf
+– **Geochemical–biological Onsager coefficients**: Bowman et al (2024) “*A simple method for obtaining heat capacity coefficients of minerals*”, American Mineralogist (https://geothermal.wvu.edu/files/d/7b3d568e-306f-4b30-b38c-0c9e077bd9f3/american-mineralogist_2024.pdf)
+– **Electroactive biofilms & EET efficiency**: (2023) “*Systematic Full-Cycle Engineering Microbial Biofilms to Promote Extracellular Electron Transfer*”, Proceedings of the National Academy of Sciences, 120(12) (https://pmc.ncbi.nlm.nih.gov/articles/PMC10017123/)
+– **Yellowstone earthquake swarm datasets**: National Park Service (USGS Yellowstone Observatory) “*Earthquakes – Yellowstone*” https://www.nps.gov/yell/learn/nature/earthquakes.htm Swarm event summary
+– **MetaSoil project—Soil microbial datasets** Delmont et al (2015) “*Reconstructing rare soil microbial genomes using in situ enrichment and metagenomics*” Nature Communications, 6:6519 (https://pmc.ncbi.nlm.nih.gov/articles/PMC4415585/)
 
 ## **Parameter legend**
 
