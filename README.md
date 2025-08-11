@@ -8,13 +8,13 @@ It benchmarks TDC against classical flux-based models using **Self‑Organized C
 
 ## **Contents**
 
-- **`tdc_geophy_bio.py`** — Python code for simulating SOC avalanche events, Onsager flux coupling, mineralised mat residue dynamics, and TDC-based drift ratio adaptation.
-- **`README.md`** — This documentation: context, physics mapping, protocols, and references.
+- **`tdc_geophy_bio.py`** — Python code for simulating SOC avalanche events, Onsager flux coupling, mineralised mat residue dynamics and TDC-based drift ratio adaptation.
+- **`README.md`** — This documentation: context, physics mapping, protocols and references.
 - **Output figures**: Multi-panel `.pdf` and `.png` saved automatically (flux/efficiency, temperature, residues/Dr, SOC distribution).
 
 ## **Rationale**
 
-- **Challenge:** Real‑world geo‑bio hybrids (vent microbes, mineral mats, electrode arrays) must operate under **extreme temperature/pressure** with intermittent gradients. Classical models need large parameter sets (~10+) to track flux, delay, and renewal processes; they often fail beyond ~500 bar, > 300 °C.
+- **Challenge:** Real‑world geo‑bio hybrids (vent microbes, mineral mats, electrode arrays) must operate under **extreme temperature/pressure** with intermittent gradients. Classical models need large parameter sets (~10+) to track flux, delay and renewal processes. They often fail beyond ~500 bar, > 300 °C.
 - **TDC approach:** Uses **Dr** and a minimal set of substrate‑agnostic parameters to unify SOC criticality (event avalanche statistics) and Onsager flux gradients into one framework, cutting parameter count by ~20–40 %.
 - **Core novelty:**  
   - SOC exponent stability at extremes  
