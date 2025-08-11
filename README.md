@@ -33,16 +33,16 @@ It benchmarks TDC against classical flux-based models using **Self‑Organized C
   α ≈ 1 × 10⁻⁴ s⁻¹ (slow decay), β = 0.4, ω from tidal cycle (12 h period)
 - **TDC Dr:** τ_coupling ≈ 1 h, τ_decay ≈ 20 min → Dr ≈ 3.0
 
-**Parameter mapping (from code):**
+**TDC parameter mapping:**
 
 | parameter | description                            | value in code      |
 |-----------|----------------------------------------|--------------------|
 | **Dr**    | τ_coupling / τ_decay                   | 3.0                |
-| **S**     | Thermal/flux entropy scaling k\_B lnΩ  | ~0.4 Ω from vent turbulence |
-| **r₀**    | Base residue amplitude                 | 0.35               |
-| **α**     | Residue decay coefficient              | 1 × 10⁻⁴ s⁻¹       |
-| **β**     | Renewal amplitude                      | 0.4                 |
-| **ω**     | Renewal cycle frequency (tidal)        | 2π / 12 h           |
+| **S**     | thermal/flux entropy scaling k\_B lnΩ  | ~0.4 Ω from vent turbulence |
+| **r₀**    | base residue amplitude                 | 0.35               |
+| **α**     | residue decay coefficient              | 1 × 10⁻⁴ s⁻¹       |
+| **β**     | renewal amplitude                      | 0.4                 |
+| **ω**     | renewal cycle frequency (tidal)        | 2π / 12 h           |
 
 ## **Validation protocol**
 
