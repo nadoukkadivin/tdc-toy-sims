@@ -1,6 +1,6 @@
 # tdc-toy-sims
 
-## toy sims for wip tidal drift communication (tdc) — example 3 (`tdc_geophy_bio.py`)
+## toy sims for wip tidal drift communication (tdc) — example 3 (`tdc_eg3_toysim.py`)
 
 ### **What is this?**
 This example extends the Tidal‑drift communication (TDC) framework to **extreme-environment, geophysical–bio hybrid systems** such as hydrothermal vent electron transfer networks and geo‑bio sensor arrays.  
