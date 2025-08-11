@@ -12,15 +12,15 @@ This repository demonstrates a quantitative comparison between classic biophysic
 
 ## **Rationale**
 
-- **Classic models (HH+Langevin):** Used for detailed single-neuron/hybrid circuit simulation, typically requiring 7-10+ physical parameters for complex, noisy or sensor hybrid scenarios;
+- **Classic models (HH+Langevin):** Used for detailed single-neuron/hybrid circuit simulation, typically requiring 7-10+ physical parameters for complex, noisy or sensor hybrid scenarios.
 - **TDC (Tidal-drift communication) model:** Condenses drift, entropic noise, and residual signalling into a compact, low-parametric equation, reducing parameter count by ~50% without loss of essential signal dynamics, especially in long-chain or sensor hybrids.
 
 ## **Key improvements & validation metrics**
 
 **Biophysical grounding:**
-- **AP width / τ_d = 1.5ms:** Matches mammalian experimental data;
-- **Temp scaling (Q10=3):** Standard for ion channel kinetics;
-- **Noise term:** Realistic Johnson–Nyquist noise, scales with √T.
+- **AP width / τ_d = 1.5ms:** Matches mammalian experimental data
+- **Temp scaling (Q10=3):** Standard for ion channel kinetics
+- **Noise term:** Realistic Johnson–Nyquist noise, scales with √T
 
 **TDC parameter mapping:**
 | parameter | meaning                                                      | example value   |
@@ -32,8 +32,8 @@ This repository demonstrates a quantitative comparison between classic biophysic
 | α         | residue decay rate (1/50ms ~ Ca²⁺ decay timescale)           | 20 s⁻¹          |
 
 **Validation protocol:**
-- Simulate action potential (AP)-like signals using both HH+Langevin (10 param) and TDC (5 param) at 37°C (physiological) and 50°C (thermal stress);
-- **Benchmark:** signal-to-noise ratio (SNR) calculated in the main post-AP window ( ms);
+- Simulate action potential (AP)-like signals using both HH+Langevin (10 param) and TDC (5 param) at 37°C (physiological) and 50°C (thermal stress).
+- **Benchmark:** signal-to-noise ratio (SNR) calculated in the main post-AP window ( ms).
 - **Criteria:** **1.** parameter reduction ≥50%; **2.** TDC delivers >2dB SNR gain over baseline at 50°C.
 
 ## **Expected results**
@@ -74,22 +74,22 @@ Saved figures: tdc_vs_hh_high_temp_YYYYMMDD_HHMMSS.pdf, tdc_vs_hh_high_temp_YYYY
 
 ### **Biophysical models**
   - **Hodgkin & Huxley** (1952) “A quantitative description of membrane current and its application to conduction and excitation in nerve”, Journal of Physiology, 117(4) 500–544 https://pmc.ncbi.nlm.nih.gov/articles/PMC1392413/;
-  - Gerstner et al (2014) **"Neuronal Dynamics: From Single Neurons to Networks and Models of Cognition"** (https://neuronaldynamics.epfl.ch/online/Ch2.S2.html);
-  - Hille (2001) **"Ion Channels of Excitable Membranes"**, 3rd Edition, Sinauer Associates (https://archive.org/details/ionchannelsofexc0003hill); 
-  - Yang & Zheng (2014) **“Temperature dependence of ion channel kinetics”**, Channels, 8(4) 308–321 (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2891698/); 
+  - Gerstner et al (2014) **"Neuronal Dynamics: From Single Neurons to Networks and Models of Cognition"** (https://neuronaldynamics.epfl.ch/online/Ch2.S2.html)
+  - Hille (2001) **"Ion Channels of Excitable Membranes"**, 3rd Edition, Sinauer Associates (https://archive.org/details/ionchannelsofexc0003hill)
+  - Yang & Zheng (2014) **“Temperature dependence of ion channel kinetics”**, Channels, 8(4) 308–321 (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2891698/)
   - **Channel Noise and Johnson–Nyquist Theory**: Johnson (1928) “Thermal Agitation of Electricity in Conductors”, Physical Review, 32(1) 97–109 (https://web.mit.edu/dvp/Public/noise-paper.pdf);
-  - Bertram (2021) **“Channel Noise in Neurons”** (https://www.math.fsu.edu/~bertram/course_papers/Fall21/channel_noise.pdf).
+  - Bertram (2021) **“Channel Noise in Neurons”** (https://www.math.fsu.edu/~bertram/course_papers/Fall21/channel_noise.pdf)
 
 ### **TDC formalism core**
-  - Prigogine (1977) *Dissipative Structures in Energy and Matter*;  
-  - Friston (2010) *Free-Energy Principle: Unified Brain Theory*;  
+  - Prigogine (1977) *Dissipative Structures in Energy and Matter*  
+  - Friston (2010) *Free-Energy Principle: Unified Brain Theory* 
   - Current preprints: *Substrate-agnostic signalling framework* (contact author)
-  - Parameter mapping:  NMDA/AMPA kinetics → Drift (Dr), Ca²⁺ decay timescales → Residue decay (α), Action potential physiology → Inertia (I).
+  - Parameter mapping:  NMDA/AMPA kinetics → Drift (Dr), Ca²⁺ decay timescales → Residue decay (α), Action potential physiology → Inertia (I)
 
 ### **Validation & benchmarking**
-- **Goldman** (1943) “Potential, Impedance, and Rectification in Membranes.” Journal of General Physiology, 27(1), 37–60 (https://doi.org/10.1085/jgp.27.1.37);
-- **Goldwyn & Shea-Brown** (2011) “The what and where of adding channel noise to the Hodgkin-Huxley equations”, Journal of Neurophysiology, 106(4), 2107–2118 (https://journals.physiology.org/doi/full/10.1152/jn.00686.2003); 
-- **IEC 60601-2-78** (2023) 'Medical Electrical Equipment—Part 2-78: Particular requirements for basic safety and essential performance of medical electrical equipment for electrophysiological signal quality" (https://webstore.iec.ch/en/publication/31388).
+- **Goldman** (1943) “Potential, Impedance, and Rectification in Membranes.” Journal of General Physiology, 27(1), 37–60 (https://doi.org/10.1085/jgp.27.1.37)
+- **Goldwyn & Shea-Brown** (2011) “The what and where of adding channel noise to the Hodgkin-Huxley equations”, Journal of Neurophysiology, 106(4), 2107–2118 (https://journals.physiology.org/doi/full/10.1152/jn.00686.2003) 
+- **IEC 60601-2-78** (2023) 'Medical Electrical Equipment—Part 2-78: Particular requirements for basic safety and essential performance of medical electrical equipment for electrophysiological signal quality" (https://webstore.iec.ch/en/publication/31388)
 
   ### **Param legend**
 | parameter   | source                       | value in code              |
@@ -106,8 +106,8 @@ Saved figures: tdc_vs_hh_high_temp_YYYYMMDD_HHMMSS.pdf, tdc_vs_hh_high_temp_YYYY
 
 ## **Customization/extension**
 
-- Adjust parameters in `tdc_biohybrid` or initial conditions to test new regimes;
-- Adapt for long-chain or extended sensor/junction scenarios to mirror realistic bioelectronic hybrid devices;
+- Adjust parameters in `tdc_biohybrid` or initial conditions to test the new regime.
+- Adapt for long-chain or extended sensor/junction scenarios to mirror a realistic bioelectronic hybrid device.
 - SNR, param reduction, and thermal resilience claims can be easily updated or extended for future benchmarks.
 
 ## **Contact**
