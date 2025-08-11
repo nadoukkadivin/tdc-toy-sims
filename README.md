@@ -12,7 +12,7 @@ It benchmarks TDC against classical flux-based models using **Self‑Organized C
 - **`README.md`** — This documentation: context, physics mapping, protocols, and references.
 - **Output figures**: Multi-panel `.pdf` and `.png` saved automatically (flux/efficiency, temperature, residues/Dr, SOC distribution).
 
-## **Scientific rationale**
+## *Rationale**
 
 - **Challenge:**  
   Real‑world geo‑bio hybrids (vent microbes, mineral mats, electrode arrays) must operate under **extreme temperature/pressure** with intermittent gradients. Classical models need large parameter sets (~10+) to track flux, delay, and renewal processes; they often fail beyond ~500 bar, > 300 °C.
