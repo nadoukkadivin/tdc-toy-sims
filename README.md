@@ -122,7 +122,7 @@ Files saved: geophy_bio_hybrid_350bar_YYYYMMDD_HHMMSS.pdf/png
 
 ## **Contact**
 
-For scientific queries, bugs, or collaboration: [Nadoukka Divin], [Rhythm and Density], [nadoukkadivin@gmail.com]
+For questions, bugs or collab: [Nadoukka Divin], [Rhythm and Density], [nadoukkadivin@gmail.com]
 
 ### **Sample figure output**
 
