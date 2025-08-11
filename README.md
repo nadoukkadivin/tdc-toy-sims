@@ -3,8 +3,7 @@
 ## toy sims for wip tidal drift communication (tdc) — example 3 (`tdc_eg3_toysim.py`)
 
 ### **What is this?**
-This example extends the Tidal‑drift communication (TDC) framework to **extreme-environment, geophysical–bio hybrid systems** such as hydrothermal vent electron transfer networks and geo‑bio sensor arrays.  
-It benchmarks TDC against classical flux-based models using **Self‑Organized Criticality (SOC)** for event statistics and **Onsager reciprocal relations** for coupled heat/electron transport.
+This example extends the Tidal‑drift communication (TDC) framework to **extreme-environment, geophysical–bio hybrid systems** such as hydrothermal vent electron transfer networks and geo‑bio sensor arrays. It benchmarks TDC against classical flux-based models using **Self‑Organized Criticality (SOC)** for event statistics and **Onsager reciprocal relations** for coupled heat/electron transport.
 
 ## **Contents**
 
