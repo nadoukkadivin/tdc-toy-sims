@@ -1,0 +1,405 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+tdc_geophy_bio.py – Geophysical-bio hybrid simulation with TDC physics
+
+Simulates electron transfer in extreme environments (e.g. hydrothermal vents)
+using Tidal-drift communication framework to model:
+- Self-organised Criticality (SOC) dynamics
+- Onsager reciprocal relations for flux coupling
+- Mineralised mat residue dynamics
+- Electron transfer efficiency (EET) under extreme conditions
+
+Physics:
+1. SOC: Power-law distributed events (avalanches) via Bak-Tang-Wiesenfeld model
+2. Onsager: Coupled thermal/electrical fluxes (L_ij matrix)
+3. TDC: Drift ratio (Dr) for criticality tuning, residues for renewal cycles
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+from datetime import datetime
+import sys
+from typing import Tuple, Dict
+from scipy.stats import powerlaw
+from scipy.integrate import solve_ivp
+
+# Set random seed for reproducibility
+np.random.seed(42)
+
+# ==================================================================
+# Geophysical constants & paramenters 
+# ==================================================================
+K_B = 1.380649e-23       # Boltzmann constant (J/K)
+E_CHARGE = 1.602e-19     # Electron charge (C)
+AVOGADRO = 6.022e23      # Avogadro's number
+DAY_SEC = 86400          # Seconds in a day
+HOUR_SEC = 3600          # Seconds in an hour
+
+# Simulation parameters (adjust as needed)
+SIM_DAYS = 30            # Simulation duration (days)
+TIME_STEP = 300          # Time step (seconds) - 5 min resolution
+PRESSURE_RANGE = (200, 500)  # Pressure range (bar)
+TEMP_RANGE = (373, 573)      # Temperature range (K) 100-300°C
+
+# SOC parameters (Bak-Tang-Wiesenfeld model)
+SOC_GRID_SIZE = 50       # SOC grid size (50x50)
+SOC_CRITICAL = 4         # Critical threshold (Z_c)
+DRIFT_BASE = 3.0         # Base drift ratio (τ_coupling/τ_decay)
+
+# Onsager coefficients (typical values for mineral-microbe systems)
+ONSAGER_COEFFS = {
+    'L11': 2.5e-3,       # Thermal conductivity (W/mK)
+    'L22': 1.8e-2,       # Electrical conductivity (S/m)
+    'L12': 4.2e-4,       # Cross-coupling coefficient (V/K)
+    'L21': 4.2e-4        # Cross-coupling coefficient (V/K) - Onsager reciprocal
+}
+
+# TDC Residue parameters (mineralised mats)
+RESIDUE_PARAMS = {
+    'r0': 0.35,          # Base residue amplitude
+    'alpha': 1e-4,       # Decay coefficient (1/s) ≈ 0.0001/s
+    'beta': 0.4,         # Renewal amplitude
+    'omega': 2*np.pi/(12*HOUR_SEC)  # Tidal frequency (12-hour cycle)
+}
+
+# ==================================================================
+# Physics models
+# ==================================================================
+
+class SelfOrganizedCriticality:
+    """Bak-Tang-Wiesenfeld model for self-organised criticality"""
+    def __init__(self, size: int, critical: int):
+        self.size = size
+        self.critical = critical
+        self.grid = np.zeros((size, size))
+        self.avalanches = []
+        
+    def add_gradient(self, gradient: float):
+        """Add electron gradient to random cell"""
+        x, y = np.random.randint(0, self.size, 2)
+        self.grid[x, y] += gradient
+        
+    def drive_system(self):
+        """Drive system to criticality"""
+        while np.any(self.grid >= self.critical):
+            unstable = np.where(self.grid >= self.critical)
+            for i, j in zip(unstable[0], unstable[1]):
+                self._topple(i, j)
+                
+    def _topple(self, i: int, j: int):
+        """Topple unstable cell (avalanche event)"""
+        self.grid[i, j] -= 4  # Critical threshold
+        # Redistribute to neighbors
+        for dx, dy in [(0,1), (1,0), (0,-1), (-1,0)]:
+            ni, nj = (i + dx) % self.size, (j + dy) % self.size
+            self.grid[ni, nj] += 1
+        # Record avalanche size
+        self.avalanches.append(1)
+
+def onsager_fluxes(T: float, dT_dx: float, dPhi_dx: float) -> Tuple[float, float]:
+    """
+    Calculate coupled fluxes using Onsager relations.
+    
+    Args:
+        T: Temperature (K)
+        dT_dx: Temperature gradient (K/m)
+        dPhi_dx: Electrical potential gradient (V/m)
+        
+    Returns:
+        J_q: Heat flux (W/m²)
+        J_e: Electron flux (A/m²)
+    """
+    L11, L12, L21, L22 = ONSAGER_COEFFS['L11'], ONSAGER_COEFFS['L12'], \
+                          ONSAGER_COEFFS['L21'], ONSAGER_COEFFS['L22']
+    
+    J_q = -L11 * dT_dx - L12 * dPhi_dx
+    J_e = -L21 * dT_dx - L22 * dPhi_dx
+    
+    return J_q, J_e
+
+def tdc_residue(t: float, alpha: float, beta: float, omega: float) -> float:
+    """
+    Mineralised mat residue functions with tidal renewal.
+    
+    Args:
+        t: Time (seconds)
+        alpha: Decay coefficient (1/s)
+        beta: Renewal amplitude
+        omega: Tidal frequency (rad/s)
+        
+    Returns:
+        Residue value at time t
+    """
+    return RESIDUE_PARAMS['r0'] * np.exp(-alpha * t) + beta * np.sin(omega * t)
+
+# ==================================================================
+# Electron transfer model
+# ==================================================================
+
+def electron_transfer_efficiency(
+    J_e: float, 
+    residue: float, 
+    T: float, 
+    P: float
+) -> float:
+    """
+    Calculate electron transfer efficiency (EET) with environmental scaling.
+    
+    Args:
+        J_e: Electron flux density (A/m²)
+        residue: Mineral mat residue value
+        T: Temperature (K)
+        P: Pressure (bar)
+        
+    Returns:
+        EET efficiency (0-1 scale)
+    """
+    # Base efficiency from flux
+    base_eff = 0.7 / (1 + np.exp(-0.5 * J_e * 1e3))  # Sigmoidal response
+    
+    # Temperature scaling (Arrhenius with cutoff)
+    arrhenius = np.exp(-8000 / T)  # ~80 kJ/mol activation energy
+    
+    # Pressure effect (inverted U-curve)
+    P_opt = 350  # Optimal pressure (bar)
+    P_effect = np.exp(-0.5 * ((P - P_opt) / 100) ** 2)
+    
+    # Residue effect (mat renewal)
+    residue_effect = 0.3 + 0.7 / (1 + np.exp(-10 * (residue - 0.2)))
+    
+    # Combine effects
+    eet = base_eff * arrhenius * P_effect * residue_effect
+    
+    # Ensure within bounds
+    return np.clip(eet, 0, 0.95)
+
+# ==================================================================
+# Simulation engine
+# ==================================================================
+
+def simulate_hybrid_system(
+    temp_grad: float, 
+    pot_grad: float, 
+    pressure: float
+) -> Dict:
+    """
+    Run full geophysical-bio hybrid simulation.
+    
+    Args:
+        temp_grad: Temperature gradient (K/m)
+        pot_grad: Electrical potential gradient (V/m)
+        pressure: Pressure (bar)
+        
+    Returns:
+        Dictionary of simulation results
+    """
+    # Initialize systems
+    soc = SelfOrganizedCriticality(SOC_GRID_SIZE, SOC_CRITICAL)
+    time_steps = int(SIM_DAYS * DAY_SEC / TIME_STEP)
+    time_points = np.arange(0, SIM_DAYS * DAY_SEC, TIME_STEP)
+    
+    # Initialize results storage
+    results = {
+        'time': time_points,
+        'temperature': np.zeros(len(time_points)),
+        'eet_efficiency': np.zeros(len(time_points)),
+        'avalanche_sizes': [],
+        'electron_flux': np.zeros(len(time_points)),
+        'residue': np.zeros(len(time_points)),
+        'drift_ratio': np.zeros(len(time_points))
+    }
+    
+    # Initial environmental conditions
+    T = np.random.uniform(*TEMP_RANGE)
+    
+    for i, t in enumerate(time_points):
+        # Update drift ratio based on pressure (criticality tuning)
+        Dr = DRIFT_BASE * (1 - 0.002 * (pressure - 300))
+        
+        # SOC dynamics
+        gradient = 0.1 + 0.05 * np.sin(2*np.pi*t/DAY_SEC)
+        soc.add_gradient(gradient)
+        soc.drive_system()
+        
+        # Record avalanche size (if any)
+        if soc.avalanches:
+            results['avalanche_sizes'].append(len(soc.avalanches))
+            soc.avalanches = []
+        
+        # Onsager flux calculations
+        J_q, J_e = onsager_fluxes(T, temp_grad, pot_grad)
+        
+        # TDC residue dynamics
+        residue = tdc_residue(t, RESIDUE_PARAMS['alpha'], 
+                             RESIDUE_PARAMS['beta'], 
+                             RESIDUE_PARAMS['omega'])
+        
+        # Electron transfer efficiency
+        eet_eff = electron_transfer_efficiency(J_e, residue, T, pressure)
+        
+        # Environmental fluctuations
+        T += np.random.normal(0, 0.1)
+        T = np.clip(T, *TEMP_RANGE)
+        
+        # Store results
+        results['temperature'][i] = T
+        results['eet_efficiency'][i] = eet_eff
+        results['electron_flux'][i] = J_e
+        results['residue'][i] = residue
+        results['drift_ratio'][i] = Dr
+    
+    return results
+
+# ==================================================================
+# Analysis & validation
+# ==================================================================
+
+def calculate_soc_exponent(avalanche_sizes: list) -> float:
+    """Calculate SOC exponent from avalanche size distribution"""
+    if not avalanche_sizes:
+        return 0.0
+    
+    sizes, counts = np.unique(avalanche_sizes, return_counts=True)
+    if len(sizes) < 2:
+        return 0.0
+    
+    # Fit power law distribution (P(s) ~ s^(-τ))
+    log_sizes = np.log(sizes)
+    log_counts = np.log(counts)
+    coeffs = np.polyfit(log_sizes, log_counts, 1)
+    return -coeffs[0]  # τ exponent
+
+def validate_efficiency(eet_efficiencies: np.ndarray) -> bool:
+    """Validate EET efficiency meets requirements"""
+    mean_efficiency = np.mean(eet_efficiencies)
+    min_efficiency = np.min(eet_efficiencies)
+    return mean_efficiency > 0.5 and min_efficiency > 0.3
+
+def validate_parameters(soc_exponent: float) -> bool:
+    """Validate criticality parameters"""
+    return 3.8 <= soc_exponent <= 4.2
+
+# ==================================================================
+# Visualization
+# ==================================================================
+
+def plot_results(results: Dict, pressure: float):
+    """Generate publication-quality visualization of results"""
+    fig, axs = plt.subplots(4, 1, figsize=(12, 14), sharex=True)
+    time_days = results['time'] / DAY_SEC
+    
+    # Electron flux and efficiency
+    ax1 = axs[0]
+    ax1.plot(time_days, results['electron_flux'], 'b-', label='Electron Flux (A/m²)')
+    ax1.set_ylabel('Electron Flux', color='b')
+    ax1.tick_params(axis='y', labelcolor='b')
+    ax1.grid(alpha=0.2)
+    
+    ax1b = ax1.twinx()
+    ax1b.plot(time_days, results['eet_efficiency'], 'r-', label='EET Efficiency')
+    ax1b.set_ylabel('EET Efficiency', color='r')
+    ax1b.tick_params(axis='y', labelcolor='r')
+    ax1b.axhline(0.5, color='r', linestyle='--', alpha=0.5)
+    ax1.set_title(f'Electron Transfer & Efficiency (Pressure: {pressure} bar)')
+    
+    # Environmental parameters
+    ax2 = axs[1]
+    ax2.plot(time_days, results['temperature'] - 273, 'g-', label='Temperature (°C)')
+    ax2.set_ylabel('Temperature (°C)')
+    ax2.axhline(300, color='r', linestyle='--', alpha=0.5, label='300°C Limit')
+    ax2.grid(alpha=0.2)
+    ax2.legend(loc='upper right')
+    
+    # TDC parameters
+    ax3 = axs[2]
+    ax3.plot(time_days, results['residue'], 'm-', label='Mineral Mat Residue')
+    ax3.set_ylabel('Residue Value')
+    ax3.grid(alpha=0.2)
+    
+    ax3b = ax3.twinx()
+    ax3b.plot(time_days, results['drift_ratio'], 'c-', label='Drift Ratio (Dr)')
+    ax3b.set_ylabel('Drift Ratio', color='c')
+    ax3b.tick_params(axis='y', labelcolor='c')
+    
+    # SOC analysis
+    ax4 = axs[3]
+    if results['avalanche_sizes']:
+        sizes, counts = np.unique(results['avalanche_sizes'], return_counts=True)
+        if len(sizes) > 1:
+            ax4.loglog(sizes, counts, 'ko-', label='Avalanche Size Distribution')
+            ax4.set_xlabel('Avalanche Size (s)')
+            ax4.set_ylabel('Frequency')
+            ax4.grid(True, which='both', alpha=0.2)
+            
+            # Add power law fit
+            soc_exp = calculate_soc_exponent(results['avalanche_sizes'])
+            fit_counts = counts[0] * (sizes/sizes[0]) ** (-soc_exp)
+            ax4.loglog(sizes, fit_counts, 'r--', 
+                      label=f'Power Law Fit (τ={soc_exp:.2f})')
+            ax4.legend()
+    
+    plt.xlabel('Time (days)')
+    fig.suptitle('Geophysical-Bio Hybrid System: SOC & Electron Transfer Dynamics', 
+                fontsize=16, y=0.98)
+    plt.tight_layout()
+    
+    # Save figure
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    fname = f"geophy_bio_hybrid_{pressure}bar_{timestamp}"
+    plt.savefig(f"{fname}.pdf", dpi=300, bbox_inches='tight')
+    plt.savefig(f"{fname}.png", dpi=300)
+    
+    return fname, soc_exp
+
+# ==================================================================
+# Main simulation
+# ==================================================================
+if __name__ == "__main__":
+    # Test pressures (200, 350, 500 bar)
+    pressures = [200, 350, 500]
+    validation_results = []
+    
+    for pressure in pressures:
+        print(f"\n=== Running simulation at {pressure} bar ===")
+        
+        # Run simulation
+        results = simulate_hybrid_system(
+            temp_grad=50,   # K/m temperature gradient
+            pot_grad=0.1,   # V/m potential gradient
+            pressure=pressure
+        )
+        
+        # Analyze results
+        soc_exponent = calculate_soc_exponent(results['avalanche_sizes'])
+        eet_validation = validate_efficiency(results['eet_efficiency'])
+        param_validation = validate_parameters(soc_exponent)
+        
+        # Generate plots
+        fname, _ = plot_results(results, pressure)
+        print(f"Saved results: {fname}.pdf/png")
+        
+        # Record validation
+        mean_eet = np.mean(results['eet_efficiency'])
+        validation_results.append({
+            'pressure': pressure,
+            'soc_exponent': soc_exponent,
+            'mean_eet': mean_eet,
+            'eet_validation': eet_validation,
+            'param_validation': param_validation
+        })
+    
+    # Print validation summary
+    print("\n=== SIMULATION VALIDATION SUMMARY ===")
+    print("Pressure | SOC τ | Mean EET | EET Valid | Param Valid")
+    for vr in validation_results:
+        print(f"{vr['pressure']:5} bar | {vr['soc_exponent']:5.2f} | {vr['mean_eet']:7.3f}  | "
+              f"{'PASS' if vr['eet_validation'] else 'FAIL'}     | "
+              f"{'PASS' if vr['param_validation'] else 'FAIL'}")
+    
+    # Final validation
+    all_valid = all(vr['eet_validation'] and vr['param_validation'] for vr in validation_results)
+    print(f"\nOverall Validation: {'PASS' if all_valid else 'FAIL'}")
+    
+    # Exit code for CI/CD
+    sys.exit(0 if all_valid else 1)
