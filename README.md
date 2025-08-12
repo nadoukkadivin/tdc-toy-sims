@@ -116,7 +116,7 @@ Saved: tdc_eg2_results_YYYYMMDD_HHMMSS.pdf/png
 
 ## **Contact**
 
-For questions, bugs or collab: [Nadoukka Divin], [Rhythm and Density], [nadoukkadivin@gmail.com]
+For questions, bugs or collab: [Nadoukká Divin], [Rhythm and Density], [nadoukkadivin@gmail.com]
 
 
 ### Sample figure output
