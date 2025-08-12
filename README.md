@@ -48,8 +48,8 @@ This example extends the Tidal‑drift communication (TDC) framework to **extrem
   - Mean **EET efficiency** > 50 % and never < 30 % in run window  
   - Parameter reduction vs 10‑param baseline: ≥ 20–40 % fewer params
 - **Criteria:**  
-  - TDC maintains SOC exponent stability and ≥ 50 % EET at most extreme simulated conditions where baseline fails (> 500 bar or > 300 °C instability).  
-  - All plots auto‑saved with a timestamp.
+  - TDC maintains SOC exponent stability and ≥ 50 % EET at most extreme simulated conditions where baseline fails (> 500 bar or > 300 °C instability)
+  - All plots auto‑saved with a timestamp
 
 ## **Expected results**
 
@@ -78,7 +78,7 @@ Files saved: geophy_bio_hybrid_350bar_YYYYMMDD_HHMMSS.pdf/png
    ```bash
    python tdc_geophy_bio.py
    ```
-   Output SOC/EET metrics and saved plots appear in the working directory.
+   Output SOC/EET metrics and saved plots appear in the working directory
 
 3. **Exit codes:**
    - `0`: Validation passed  
@@ -97,29 +97,29 @@ Files saved: geophy_bio_hybrid_350bar_YYYYMMDD_HHMMSS.pdf/png
 
 | Symbol | Description                         | Value in code       |
 |--------|-------------------------------------|---------------------|
-| α      | Residue decay rate                  | 1 × 10⁻⁴ s⁻¹        |
-| β      | Renewal amplitude                   | 0.4                 |
-| ω      | Renewal cycle frequency (tidal)     | 2π / (12 h)         |
+| α      | residue decay rate                  | 1 × 10⁻⁴ s⁻¹        |
+| β      | renewal amplitude                   | 0.4                 |
+| ω      | renewal cycle frequency (tidal)     | 2π / (12 h)         |
 | L\_ij  | Onsager coefficients                | see ONSAGER\_COEFFS |
 | τ\_d   | SOC & TDC decay time constants      | domain‑specific     |
 
 ## **Reproducibility & validation summary**
 
-- Fixed seed for reproducibility.
-- SOC analysis performed with log–log fit.
-- EET and SOC exponent thresholds validated automatically.
-- Environmental ranges: P = 200–500 bar, T = 100–300 °C.
+- Fixed seed for reproducibility
+- SOC analysis performed with log–log fit
+- EET and SOC exponent thresholds validated automatically
+- Environmental ranges: P = 200–500 bar, T = 100–300 °C
 
 ## **Customization/extension**
 
-- Swap SOC grid/threshold for other criticality models.
-- Update Onsager L\_ij coefficients for new environments.
-- Inject real field datasets instead of synthetic gradients.
-- Extend for multi‑node geo‑bio sensor network simulation.
+- Swap SOC grid/threshold for other criticality models
+- Update Onsager L\_ij coefficients for new environments
+- Inject real field datasets instead of synthetic gradients
+- Extend for multi‑node geo‑bio sensor network simulation
 
 ## **Contact**
 
-For questions, bugs or collab: [Nadoukka Divin], [Rhythm and Density], [nadoukkadivin@gmail.com]
+For questions, bugs or collab: [Nadoukká Divin], [Rhythm and density], [nadoukkadivin@gmail.com]
 
 ### **Sample figure output**
 
