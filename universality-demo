@@ -41,7 +41,7 @@ def universal_persistence(Dr, scale_factor, alpha=ALPHA, beta=BETA):
     Universal scaling relationship for TDC persistence.
     
     Args:
-        Dr: Drift ratio (τ_coupling / τ_decay)
+        Dr: drift ratio (τ_coupling / τ_decay)
         scale_factor: Domain-specific amplitude scaling
         alpha: Universal scaling exponent
         beta: Universal decay constant
@@ -117,7 +117,7 @@ if __name__ == "__main__":
     })
     
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6), dpi=120)
-    fig.suptitle('Temporal Drift Control (TDC) Universality Validation', 
+    fig.suptitle('Temporal drift control (TDC) universality validation', 
                 fontsize=16, weight='bold', y=0.98)
     
     # Plot 1: Raw domain comparison
@@ -170,13 +170,13 @@ if __name__ == "__main__":
                 ha='center', fontsize=9, bbox=dict(alpha=0.7))
     
     ax2.set_xlabel('Drift Ratio (Dr = τ_coupling / τ_decay)', fontsize=12)
-    ax2.set_ylabel('Normalized Persistence', fontsize=12)
-    ax2.set_title('Universal Scaling Collapse', fontsize=13)
+    ax2.set_ylabel('Normalized persistence', fontsize=12)
+    ax2.set_title('Universal scaling collapse', fontsize=13)
     ax2.legend(loc='upper right')
     
     # Physics insight annotation
     ax2.text(2.8, 0.25, 
-             'TDC Universality:\nDr bridges timescales\nfrom milliseconds to minutes',
+             'TDC universality:\nDr bridges timescales\nfrom milliseconds to minutes',
              fontsize=11, ha='center', va='center',
              bbox=dict(boxstyle="round,pad=0.4", facecolor="lightyellow", alpha=0.7))
     
@@ -203,7 +203,7 @@ if __name__ == "__main__":
     plt.savefig(f"{filename}.png", dpi=300, bbox_inches='tight')
     
     # Console output
-    print("Sample Measurements:")
+    print("Sample measurements:")
     print("Dr\tNeural (ms)\tBacterial (s)\tRel Error (%)")
     print("-" * 50)
     for i, dr in enumerate(SAMPLE_DR):
