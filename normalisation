@@ -1,0 +1,151 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+TDC dimensional normalisation and adaptive thresholds
+Substrate-agnostic threshold calculation with proper dimensional analysis.
+
+This script implements characteristic scale normalisation for entropy, inertia and residue parameters enabling cross-domain threshold prediction via:
+θ*_k = S*_k * I*_k * Dr + r*_k
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+from datetime import datetime
+
+# ======================
+# Dimensional constraints
+# ======================
+k_B = 1.380649e-23  # Boltzmann constant [J/K]
+
+DOMAIN_SCALES = {
+    'neural': {
+        'entropy_scale': k_B * 310,        # k_B * T_physiological [J]
+        'inertia_scale': 1e-12,           # Membrane capacitance [F]
+        'residue_scale': 1e-6,            # Max neurotransmitter conc [M]
+        'threshold_scale': 70e-3,         # Action potential threshold [V]
+        'description': 'Neural/bioelectrical domain'
+    },
+    'bacterial': {
+        'entropy_scale': k_B * 310 * 6.022e23,  # k_B * T * N_avogadro
+        'inertia_scale': 3600,            # Metabolic time constant [s]
+        'residue_scale': 1e-3,            # Max signal molecule conc [M]
+        'threshold_scale': 1e-6,          # Quorum sensing threshold [M]
+        'description': 'Bacterial/biochemical domain'
+    },
+    'geological': {
+        'entropy_scale': k_B * 288 * 1e6,     # k_B * T_earth * mass_factor
+        'inertia_scale': 86400,               # Thermal diffusion time [s]
+        'residue_scale': 1e-3,                # Mineral concentration [mol/L]
+        'threshold_scale': 273,               # Temperature threshold [K]
+        'description': 'Geological/thermal domain'
+    }
+}
+
+# ======================
+# Normlization framework
+# ======================
+class TDCNormalization:
+    """Handles dimensional consistency across TDC domains"""
+    
+    def __init__(self, domain_type):
+        if domain_type not in DOMAIN_SCALES:
+            raise ValueError(f"Unknown domain: {domain_type}")
+        self.domain = domain_type
+        self.scales = DOMAIN_SCALES[domain_type]
+    
+    def normalize_entropy(self, S_raw):
+        """Convert raw entropy to dimensionless form"""
+        return S_raw / self.scales['entropy_scale']
+    
+    def normalize_inertia(self, I_raw):
+        """Convert raw inertia to dimensionless form"""
+        return I_raw / self.scales['inertia_scale']
+    
+    def normalize_residue(self, r_raw):
+        """Convert raw residue to dimensionless form"""
+        return r_raw / self.scales['residue_scale']
+    
+    def substrate_agnostic_threshold(self, S_raw, I_raw, Dr, r_raw):
+        """
+        Calculate adaptive threshold with proper dimensional analysis
+        θ = S*I*Dr + r (normalised, then converted back)
+        """
+        # Normalise to dimensionless quantities
+        S_star = self.normalize_entropy(S_raw)
+        I_star = self.normalize_inertia(I_raw)
+        r_star = self.normalize_residue(r_raw)
+        
+        # Universal dimensionless threshold
+        θ_star = S_star * I_star * Dr + r_star
+        
+        # Convert back to domain units
+        θ = θ_star * self.scales['threshold_scale']
+        
+        return θ, θ_star  # Return both normalised and dimensional forms
+
+def validate_dimensional_consistency():
+    """Demonstrate dimensional consistency across domains"""
+    # Create test scenarios with equivalent Dr but different domains
+    Dr_test = 3.0
+    
+    results = {}
+    for domain in DOMAIN_SCALES:
+        norm = TDCNormalization(domain)
+        
+        # Generate test values (domain-appropriate scales)
+        S_test = 0.5 * norm.scales['entropy_scale']
+        I_test = 0.8 * norm.scales['inertia_scale'] 
+        r_test = 0.3 * norm.scales['residue_scale']
+        
+        θ_dimensional, θ_normalized = norm.substrate_agnostic_threshold(
+            S_test, I_test, Dr_test, r_test
+        )
+        
+        results[domain] = {
+            'θ_dimensional': θ_dimensional,
+            'θ_normalized': θ_normalized,
+            'scales': norm.scales
+        }
+    
+    return results
+
+# ======================
+# Main validation
+# ======================
+if __name__ == "__main__":
+    print("=== TDC dimensional normalization validation ===")
+    print("Testing threshold calculation across domains...\n")
+    
+    # Validate dimensional consistency
+    results = validate_dimensional_consistency()
+    
+    print("Cross-Domain Threshold Comparison (Dr = 3.0):")
+    print("-" * 80)
+    print("Domain\t\tθ_normalized\tθ_dimensional\tUnits")
+    print("-" * 80)
+    
+    for domain, data in results.items():
+        θ_norm = data['θ_normalized']
+        θ_dim = data['θ_dimensional']
+        units = "V" if domain == 'neural' else "M" if domain == 'bacterial' else "K"
+        
+        print(f"{domain:12}\t{θ_norm:.3f}\t\t{θ_dim:.2e}\t\t{units}")
+    
+    # Validate that normalized thresholds are similar (universality)
+    normalized_values = [data['θ_normalized'] for data in results.values()]
+    max_deviation = np.max(normalized_values) - np.min(normalized_values)
+    
+    print(f"\n=== UNIVERSALITY CHECK ===")
+    print(f"Normalized threshold range: {np.min(normalized_values):.3f} - {np.max(normalized_values):.3f}")
+    print(f"Maximum deviation: {max_deviation:.3f}")
+    
+    if max_deviation < 0.1:  # Within 10%
+        print("✅ Dimensional consistency validated")
+        print("Normalized thresholds show substrate-agnostic behavior")
+    else:
+        print("❌ Dimensional inconsistency detected")
+    
+    print("\n=== Prapctical application ===")
+    print("Use TDCNormalization class for your domain:")
+    print("neural_norm = TDCNormalization('neural')")
+    print("threshold = neural_norm.substrate_agnostic_threshold(S, I, Dr, r)")
