@@ -1,0 +1,317 @@
+#!/usr/bin/env python3
+"""
+Multi-domain unified TDC residue dynamics with vectorised NumPy operations,
+dimensional normalisation, validation, configuration summary and result export
+"""
+
+import numpy as np
+from scipy.integrate import solve_ivp
+import matplotlib.pyplot as plt
+
+class TDCNormalisation:
+    k_B = 1.380649e-23  # Boltzmann constant [J/K]
+
+    DOMAIN_SCALES = {
+        'neural': {
+            'entropy_scale': k_B * 310,
+            'inertia_scale': 1e-12,
+            'residue_scale': 1e-6,
+            'threshold_scale': 70e-3,
+            'description': 'Neural/bioelectrical domain'
+        },
+        'bacterial': {
+            'entropy_scale': k_B * 310 * 6.022e23,
+            'inertia_scale': 3600,
+            'residue_scale': 1e-3,
+            'threshold_scale': 1e-6,
+            'description': 'Bacterial/biochemical domain'
+        },
+        'geological': {
+            'entropy_scale': k_B * 288 * 1e6,
+            'inertia_scale': 86400,
+            'residue_scale': 1e-3,
+            'threshold_scale': 273,
+            'description': 'Geological/thermal domain'
+        }
+    }
+
+    def __init__(self, domain):
+        if domain not in self.DOMAIN_SCALES:
+            raise ValueError(f"Unknown domain: {domain}")
+        self.scales = self.DOMAIN_SCALES[domain]
+
+    def normalize_entropy(self, S_raw):
+        return S_raw / self.scales['entropy_scale']
+
+    def normalize_inertia(self, I_raw):
+        return I_raw / self.scales['inertia_scale']
+
+    def normalize_residue(self, r_raw):
+        return r_raw / self.scales['residue_scale']
+
+    def denormalize_threshold(self, theta_star):
+        return theta_star * self.scales['threshold_scale']
+
+    def compute_dimensionless_threshold(self, S_raw, I_raw, Dr, r_raw):
+        S_star = self.normalize_entropy(S_raw)
+        I_star = self.normalize_inertia(I_raw)
+        r_star = self.normalize_residue(r_raw)
+        return S_star * I_star * Dr + r_star
+
+
+class MultiDomainTDC:
+    def __init__(self, domains):
+        self.domains = domains
+        self.normalizers = {d: TDCNormalization(d) for d in domains}
+
+        self.residue_params = {
+            'physical_structural': {'decay': 0.01, 'prod': 0.1, 'diff': 0.001, 'coupling': 0.8},
+            'chemical_binding': {'decay': 0.1, 'prod': 0.5, 'diff': 0.1, 'coupling': 1.2},
+            'molecular_memory': {'decay': 0.005, 'prod': 0.2, 'diff': 0.0001, 'coupling': 0.9},
+            'topological_conformational': {'decay': 0.02, 'prod': 0.3, 'diff': 0.01, 'coupling': 1.0},
+            'energetic_coupling': {'decay': 0.2, 'prod': 0.8, 'diff': 0.3, 'coupling': 1.5}
+        }
+
+        self.domain_res_types = {
+            'neural': ['chemical_binding', 'molecular_memory'],
+            'bacterial': ['physical_structural', 'energetic_coupling'],
+            'geological': ['physical_structural', 'topological_conformational'],
+        }
+
+        self.domain_weights = {
+            'neural': np.array([0.6, 0.4]),
+            'bacterial': np.array([0.7, 0.3]),
+            'geological': np.array([0.5, 0.5]),
+        }
+
+        self.Dr = {
+            'neural': 3.0,
+            'bacterial': 2.5,
+            'geological': 2.5
+        }
+
+        self.coupling_strengths = {
+            'neural': {'bacterial': 0.1, 'geological': 0.05},
+            'bacterial': {'neural': 0.1, 'geological': 0.02},
+            'geological': {'neural': 0.05, 'bacterial': 0.02}
+        }
+
+        self.initialize_physical_parameters()
+
+    def get_domain_indices(self):
+        domain_indices = {}
+        idx = 0
+        for domain in self.domains:
+            n_residues = len(self.domain_res_types[domain])
+            domain_indices[domain] = {
+                'residues_start': idx,
+                'residues_end': idx + n_residues,
+                'signal_idx': idx + n_residues
+            }
+            idx += n_residues + 1
+        return domain_indices
+
+    def initialize_physical_parameters(self):
+        self.physical_params = {
+            'neural': {'entropy_raw': 1e-20, 'inertia_raw': 1e-12, 'signal_decay_rate': 0.1},
+            'bacterial': {'entropy_raw': 1e-19, 'inertia_raw': 1e3, 'signal_decay_rate': 0.08},
+            'geological': {'entropy_raw': 1e-18, 'inertia_raw': 1e4, 'signal_decay_rate': 0.05}
+        }
+
+    def print_configuration(self):
+        print("\nSystem Configuration:")
+        print("=" * 50)
+        for domain in self.domains:
+            print(f"{domain}:")
+            print(f"  Dr = {self.Dr[domain]}")
+            print(f"  Residue types: {self.domain_res_types[domain]}")
+            print(f"  Weights: {self.domain_weights[domain]}")
+            print(f"  Physical params: {self.physical_params[domain]}")
+        print("=" * 50)
+
+    def residue_odes(self, t, y):
+        domain_indices = self.get_domain_indices()
+        dydt = []
+
+        for domain in self.domains:
+            norm = self.normalizers[domain]
+            phys = self.physical_params[domain]
+            res_types = self.domain_res_types[domain]
+            weights = self.domain_weights[domain]
+            Dr = self.Dr[domain]
+
+            decay_rates = np.array([self.residue_params[r]['decay'] for r in res_types])
+            prod_rates = np.array([self.residue_params[r]['prod'] for r in res_types])
+            diff_rates = np.array([self.residue_params[r]['diff'] for r in res_types])
+            coupling_rates = np.array([self.residue_params[r]['coupling'] for r in res_types])
+
+            idx = domain_indices[domain]
+            residues = np.array(y[idx['residues_start']:idx['residues_end']])
+            signal = y[idx['signal_idx']]
+
+            cross_input = 0.0
+            for other_domain in self.domains:
+                if other_domain != domain:
+                    cross_signal = y[domain_indices[other_domain]['signal_idx']]
+                    cross_input += self.coupling_strengths[domain].get(other_domain, 0) * cross_signal
+
+            dGamma = (-decay_rates * residues +
+                      prod_rates * signal +
+                      diff_rates * (0 - residues) +
+                      0.02 * decay_rates * np.random.randn(len(res_types)))
+            dydt.extend(dGamma.tolist())
+
+            residue_contrib = np.sum(weights * coupling_rates * np.tanh(residues))
+            dSdt = -phys['signal_decay_rate'] * signal + residue_contrib + cross_input + 0.01 * np.random.randn()
+            dydt.append(dSdt)
+
+        return dydt
+
+    def effective_residue(self, domain, y, domain_indices=None):
+        if domain_indices is None:
+            domain_indices = self.get_domain_indices()
+        idx = domain_indices[domain]
+        residues = np.array(y[idx['residues_start']:idx['residues_end']])
+        weights = self.domain_weights[domain]
+        coupling_rates = np.array([self.residue_params[r]['coupling'] for r in self.domain_res_types[domain]])
+        total = np.sum(weights * coupling_rates * residues)
+        return total
+
+    def response_probability(self, stimulus, domain, y):
+        norm = self.normalizers[domain]
+        phys = self.physical_params[domain]
+
+        S_raw = phys['entropy_raw']
+        I_raw = phys['inertia_raw']
+
+        r_raw = self.effective_residue(domain, y) * norm.scales['residue_scale']
+
+        theta_star = norm.compute_dimensionless_threshold(S_raw, I_raw, self.Dr[domain], r_raw)
+
+        stimulus_norm = stimulus / norm.scales['threshold_scale']
+
+        return 1.0 / (1.0 + np.exp(-10 * (stimulus_norm - theta_star)))
+
+    def validate_universality(self, sol):
+        domain_indices = self.get_domain_indices()
+        normalized_signals = {}
+
+        for domain in self.domains:
+            idx = domain_indices[domain]
+            signal = sol.y[idx['signal_idx']]
+            normalized_signals[domain] = signal / np.max(signal)
+
+        results = {}
+        domains_list = list(self.domains)
+
+        for i in range(len(domains_list)):
+            for j in range(i + 1, len(domains_list)):
+                dom1, dom2 = domains_list[i], domains_list[j]
+                corr = np.corrcoef(normalized_signals[dom1], normalized_signals[dom2])[0, 1]
+                rmse = np.sqrt(np.mean((normalized_signals[dom1] - normalized_signals[dom2]) ** 2))
+
+                results[f"{dom1}_{dom2}"] = {
+                    'correlation': corr,
+                    'rmse': rmse,
+                    'universal': corr > 0.85 and rmse < 0.2
+                }
+
+        return results
+
+    def export_results(self, sol, validation_results, filename="tdc_results"):
+        np.savez(f"{filename}.npz",
+                 time=sol.t,
+                 signals=sol.y,
+                 domains=self.domains,
+                 validation=validation_results)
+
+        plt.savefig(f"{filename}.png", dpi=300, bbox_inches='tight')
+        plt.savefig(f"{filename}.pdf", bbox_inches='tight')
+
+        print(f"Results saved to {filename}.*")
+
+    def simulate(self, t_span=[0, 200]):
+        y0 = []
+        for domain in self.domains:
+            n_types = len(self.domain_res_types[domain])
+            y0.extend([0.1] * n_types)
+            y0.append(0.5)
+        return solve_ivp(self.residue_odes, t_span, y0, method='RK45', dense_output=True)
+
+    def plot_results(self, sol, validation_results):
+        plt.figure(figsize=(16, 10))
+        domain_indices = self.get_domain_indices()
+
+        plt.subplot(2, 1, 1)
+        for domain in self.domains:
+            idx = domain_indices[domain]
+            signal = sol.y[idx['signal_idx']]
+            plt.plot(sol.t, signal / np.max(signal), label=f"{domain} (Dr={self.Dr[domain]})", linewidth=2)
+        plt.xlabel("Time")
+        plt.ylabel("Normalized Signal")
+        plt.title("Multi-Domain TDC: Normalized Signal Dynamics")
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+
+        plt.subplot(2, 1, 2)
+        correlations = [results['correlation'] for results in validation_results.values()]
+        pairs = list(validation_results.keys())
+
+        plt.bar(range(len(correlations)), correlations)
+        plt.axhline(y=0.85, color='r', linestyle='--', label='Universality Threshold')
+        plt.xticks(range(len(correlations)), pairs, rotation=45)
+        plt.ylabel("Correlation Coefficient")
+        plt.title("Cross-Domain Universality Validation")
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+
+        plt.tight_layout()
+        plt.show()
+
+    def simulate_with_validation(self, t_span=[0, 200]):
+        sol = self.simulate(t_span)
+        validation_results = self.validate_universality(sol)
+        self.plot_results(sol, validation_results)
+        return sol, validation_results
+
+
+if __name__ == "__main__":
+    print("=== Multi-domain TDC universality validation ===\n")
+
+    domains = ['neural', 'bacterial', 'geological']
+    tdc = MultiDomainTDC(domains)
+
+    # Print configuration before running
+    tdc.print_configuration()
+
+    print("Running simulation with equivalent Dr=2.5 across domains...\n")
+    for domain in domains:
+        tdc.Dr[domain] = 2.5
+
+    sol, validation_results = tdc.simulate_with_validation([0, 300])
+
+    # Export simulation and validation results
+    tdc.export_results(sol, validation_results)
+
+    print("\n" + "=" * 60)
+    print("Final validation results:")
+    print("=" * 60)
+
+    all_universal = True
+    for pair, results in validation_results.items():
+        status = "✅ PASS" if results['universal'] else "❌ FAIL"
+        print(f"{pair:25s}: corr = {results['correlation']:6.3f}, "
+              f"RMSE = {results['rmse']:6.3f} {status}")
+        if not results['universal']:
+            all_universal = False
+
+    print("=" * 60)
+    if all_universal:
+        print("🎉 TDC universality confirmed!")
+        print("   Different domains show equivalent normalized behavior")
+        print("   when drift ratio (Dr) is matched across domains")
+    else:
+        print("⚠️  Partial universality - some domain pairs need tuning")
+
+    print(f"\nDrift ratio (Dr) = τ_coupling / τ_decay")
+    print("Universality criterion: correlation > 0.85, RMSE < 0.2")
