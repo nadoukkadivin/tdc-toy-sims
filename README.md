@@ -70,6 +70,24 @@ Plotting persistence vs Dr for both domains shows a common scaling relationship 
 
 Insert simple figure here: persistence (y) vs Dr (x); neural and QS points lie on the same curve. This confirms TDC’s value in collapsing multi-domain behaviours for prediction and resilience – even in systems with vastly different physical scales.
 
+# Residue dynamics simulation
+
+The framework leverages:
+- **Vectorised residue dynamics for computational efficiency**
+- **Dimensional normalisation enabling substrate-agnostic thresholding and universality testing**
+- **Cross-domain coupling to explore integrated multi-physics behaviour**
+
+Codebase supports reproducible simulations, validation of cross-domain universality and result export for dissemination.
+
+## Features
+
+- Efficient multi-domain residue and signal ODE simulation with adaptive coupling
+- Physical parameter normalization based on domain-specific scales (entropy, inertia, concentration)
+- Sharpened sigmoid gating for precise response probability estimation
+- Quantitative universality validation across domain behaviors using correlation and RMSE metrics
+- Automated plotting and exporting of simulation results and validation summaries
+- Configurable residue types and weights per domain to reflect biological/physical specificity
+
 ## **Citation**
 
 If you use this code/concepts in research, please cite the relevant underlying work as listed in each example’s README.
