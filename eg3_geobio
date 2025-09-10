@@ -353,6 +353,40 @@ def plot_results(results: Dict, pressure: float):
     return fname, soc_exp
 
 # ==================================================================
+# Continuous residue dynamics (for non-eq realism)
+# ==================================================================
+
+def continuous_residue_dynamics(
+    t: np.ndarray, 
+    Gamma: np.ndarray, 
+    alpha: float, 
+    eta_S: float, 
+    xi: np.ndarray, 
+    D: float, 
+    beta: float, 
+    tau_decay: float, 
+    local_grad: float
+) -> np.ndarray:
+    """
+    Extended dΓ/dt for continuous fields in non-eq.
+    Gamma: residue field (1D array for r in this basic version)
+    xi: noise array (same shape as Gamma)
+    Returns: dGamma/dt array
+    """
+    # Diffusion term (∇² Γ) - basic 1D finite difference
+    d2Gamma_dr2 = np.gradient(np.gradient(Gamma))  # For 1D; use scipy.ndimage.laplace for 2D
+
+    # Finite-time excess
+    excess_term = beta * np.var(xi) / tau_decay
+
+    # Local input for directed tangles (basic: add to gradient)
+    F_local = 0.1 * local_grad  # ε=0.1 basic
+
+    dGamma_dt = -alpha * Gamma + eta_S * xi + D * d2Gamma_dr2 + excess_term + F_local
+
+    return dGamma_dt
+
+# ==================================================================
 # Main simulation
 # ==================================================================
 if __name__ == "__main__":
