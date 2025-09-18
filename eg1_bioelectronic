@@ -1,5 +1,5 @@
 """
-tdc_eg1_toysim.py – TDC (Tidal-Drift communication) toy simulation.
+tdc_eg1_toysim.py – TDC (Tidal-drift communication) toy simulation.
 
 Simulation comparing Hodgkin-Huxley + Langevin model vs TDC model
 for bioelectronic hybrid signal propagation under varied thermal conditions.
@@ -207,8 +207,8 @@ def generate_plots(t: np.ndarray, results: tuple, snr_values: tuple) -> str:
     base_name = f"tdc_vs_hh_thermal_{timestamp}"
     
     plt.savefig(f"{base_name}.pdf", dpi=300, bbox_inches='tight', 
-                metadata={'Author': 'TDC Validation', 
-                         'Title': 'Bioelectronic Hybrid Thermal Resilience'})
+                metadata={'Author': 'TDC validation', 
+                         'Title': 'Bioelectronic hybrid thermal resilience'})
     plt.savefig(f"{base_name}.png", dpi=300)
     
     return base_name
