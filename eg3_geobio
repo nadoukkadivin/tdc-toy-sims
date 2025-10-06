@@ -175,6 +175,120 @@ def electron_transfer_efficiency(
     return np.clip(eet, 0, 0.95)
 
 # ==================================================================
+# Monte Carlo EET variability analysis
+# ==================================================================
+
+def monte_carlo_eet_variability(
+    J_e: float,
+    residue: float, 
+    T: float,
+    P: float,
+    n_runs: int = 1000
+) -> Dict[str, float]:
+    """
+    Monte Carlo analysis of EET efficiency variability under extreme conditions
+    Returns a statistical summary of EET distribution
+    """
+    efficiencies = []
+    
+    for _ in range(n_runs):
+        # Environmental stochasticity - realistic variations
+        T_var = T + np.random.normal(0, 15)  # ±15K temperature fluctuations
+        P_var = P * np.random.normal(1.0, 0.1)  # 10% pressure variations
+        J_e_var = J_e * np.random.lognormal(0, 0.2)  # Log-normal flux variations
+        
+        # Residue stochasticity (mat renewal uncertainty)
+        residue_var = residue * np.random.normal(1.0, 0.15)
+        
+        # Base efficiency calculation with stochastic elements
+        base_eff = 0.7 / (1 + np.exp(-0.5 * J_e_var * 1e3))
+        
+        # Arrhenius with stochastic activation energy (60-100 kJ/mol range)
+        E_a = np.random.uniform(60000, 100000)  # J/mol
+        arrhenius = np.exp(-E_a / (K_B * T_var * AVOGADRO))
+        
+        # Pressure effect with stochastic optimal pressure
+        P_opt = np.random.normal(350, 25)  # bar
+        P_effect = np.exp(-0.5 * ((P_var - P_opt) / 100) ** 2)
+        
+        # Residue effect with threshold variability
+        residue_threshold = np.random.normal(0.2, 0.05)
+        residue_effect = 0.3 + 0.7 / (1 + np.exp(-10 * (residue_var - residue_threshold)))
+        
+        eet = base_eff * arrhenius * P_effect * residue_effect
+        efficiencies.append(np.clip(eet, 0.1, 0.95))  # Physical bounds
+    
+    efficiencies = np.array(efficiencies)
+    
+    return {
+        'mean': np.mean(efficiencies),
+        'std': np.std(efficiencies),
+        'cv': np.std(efficiencies) / np.mean(efficiencies),  # Coefficient of variation
+        'p5': np.percentile(efficiencies, 5),   # 5th percentile
+        'p95': np.percentile(efficiencies, 95), # 95th percentile  
+        'failure_prob': np.mean(efficiencies < 0.5),  # Probability of EET < 50%
+        'high_efficiency_prob': np.mean(efficiencies > 0.7)  # Probability of EET > 70%
+    }
+
+def enhanced_electron_transfer_efficiency(
+    J_e: float,
+    residue: float,
+    T: float, 
+    P: float,
+    use_monte_carlo: bool = True
+) -> float:
+    """
+    Enhanced EET calculation with optional Monte Carlo variability analysis
+    """
+    if use_monte_carlo:
+        mc_results = monte_carlo_eet_variability(J_e, residue, T, P)
+        
+        # Print variability summary (optional - for debugging)
+        if np.random.random() < 0.01:  # 1% chance to print sample
+            print(f"MC EET: {mc_results['mean']:.3f} ± {mc_results['std']:.3f} "
+                  f"(CV: {mc_results['cv']:.2f}, P(fail): {mc_results['failure_prob']:.3f})")
+        
+        return mc_results['mean']
+    else:
+        # Original deterministic calculation
+        base_eff = 0.7 / (1 + np.exp(-0.5 * J_e * 1e3))
+        arrhenius = np.exp(-8000 / T)
+        P_opt = 350
+        P_effect = np.exp(-0.5 * ((P - P_opt) / 100) ** 2)
+        residue_effect = 0.3 + 0.7 / (1 + np.exp(-10 * (residue - 0.2)))
+        
+        eet = base_eff * arrhenius * P_effect * residue_effect
+        return np.clip(eet, 0, 0.95)
+
+def analyze_eet_variability(results: Dict, pressure: float):
+    """
+    Analyze EET variability across the simulation
+    """
+    eet_values = results['eet_efficiency']
+    
+    variability_analysis = {
+        'pressure': pressure,
+        'mean_eet': np.mean(eet_values),
+        'std_eet': np.std(eet_values),
+        'min_eet': np.min(eet_values),
+        'max_eet': np.max(eet_values),
+        'time_above_60pct': np.mean(eet_values > 0.6),
+        'time_below_40pct': np.mean(eet_values < 0.4),
+    }
+    
+    # Run detailed Monte Carlo at simulation midpoint
+    mid_idx = len(eet_values) // 2
+    mid_mc = monte_carlo_eet_variability(
+        results['electron_flux'][mid_idx],
+        results['residue'][mid_idx], 
+        results['temperature'][mid_idx],
+        pressure
+    )
+    variability_analysis.update({'mid_simulation_mc': mid_mc})
+    
+    return variability_analysis
+
+# ==================================================================
 # Simulation engine
 # ==================================================================
 
@@ -236,7 +350,7 @@ def simulate_hybrid_system(
                              RESIDUE_PARAMS['omega'])
         
         # Electron transfer efficiency
-        eet_eff = electron_transfer_efficiency(J_e, residue, T, pressure)
+        eet_eff = enhanced_electron_transfer_efficiency(J_e, residue, T, pressure, use_monte_carlo=True)
         
         # Environmental fluctuations
         T += np.random.normal(0, 0.1)
@@ -403,7 +517,14 @@ if __name__ == "__main__":
             pot_grad=0.1,   # V/m potential gradient
             pressure=pressure
         )
-        
+         print("\n--- Monte Carlo EET Variability Analysis ---")
+        variability_results = analyze_eet_variability(results, pressure)
+        print(f"EET Variability at {pressure} bar:")
+        print(f"  Mean: {variability_results['mean_eet']:.3f} ± {variability_results['std_eet']:.3f}")
+        print(f"  Range: [{variability_results['min_eet']:.3f}, {variability_results['max_eet']:.3f}]")
+        print(f"  Time >60%: {variability_results['time_above_60pct']:.1%}")
+        print(f"  MC Failure prob: {variability_results['mid_simulation_mc']['failure_prob']:.1%}")
+
         # Analyze results
         soc_exponent = calculate_soc_exponent(results['avalanche_sizes'])
         eet_validation = validate_efficiency(results['eet_efficiency'])
