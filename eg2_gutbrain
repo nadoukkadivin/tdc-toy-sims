@@ -154,6 +154,206 @@ def continuous_residue_dynamics(
     return dGamma_dt
 
 # ==================================================================
+# Phase diagram analysis 
+# ==================================================================
+def generate_phase_diagram(
+    S_range: np.ndarray,
+    Dr_range: np.ndarray,
+    noise_levels: List[float] = [0.1, 0.3, 0.5],
+    n_monte_carlo: int = 5,  # Multiple trials per parameter point
+    seed: int = 42  # For reproducibility
+):
+    """
+    Generate phase diagrams showing stability regions for different noise levels.
+    Uses Monte Carlo sampling for true "stability under noise" analysis.
+   
+    Args:
+        S_range: Entropy values to test
+        Dr_range: Drift ratio values to test
+        noise_levels: Different noise conditions to visualise
+        n_monte_carlo: Number of stochastic trials per parameter point
+        seed: Random seed for reproducible MC
+    """
+    np.random.seed(seed)  # Set for repro
+    fig, axes = plt.subplots(1, len(noise_levels), figsize=(15, 5))
+    if len(noise_levels) == 1:
+        axes = [axes]
+   
+    # Test parameters (fixed for phase diagram)
+    t_test = np.linspace(0, 3600, 1000)  # Longer: 1 hour for bacterial scales
+   
+    for i, noise_level in enumerate(noise_levels):
+        stability_map = np.zeros((len(S_range), len(Dr_range)))
+        reliability_map = np.zeros((len(S_range), len(Dr_range)))  # Success rate
+       
+        for j, S in enumerate(S_range):
+            for k, Dr in enumerate(Dr_range):
+                stability_scores = []
+               
+                # MONTE CARLO: Multiple stochastic trials
+                for trial in range(n_monte_carlo):
+                    try:
+                        # Add stochasticity to parameters for true noise testing
+                        T_effective = 310 + np.random.normal(0, noise_level*5)  # Temp fluctuations
+                        residue_carryover_effective = 0.4 * np.random.lognormal(0, noise_level*0.1)  # Stochastic coupling
+                       
+                        # Simulate gut-brain propagation with stochastic parameters
+                        signals, residues = propagate_signal(
+                            t_test,
+                            tdc_domain,
+                            {
+                                'Dr': {'GUT': Dr, 'BLOOD': Dr, 'BRAIN': Dr},
+                                'S': {'GUT': S, 'BLOOD': S, 'BRAIN': S},
+                                'I': {'GUT': 1.0, 'BLOOD': 1.0, 'BRAIN': 1.0},
+                                'r0': {'GUT': 0.3, 'BLOOD': 0.3, 'BRAIN': 0.3},
+                                'alpha': {'GUT': 0.01, 'BLOOD': 0.01, 'BRAIN': 0.01}
+                            },
+                            T=T_effective,
+                            residue_carryover=residue_carryover_effective
+                        )
+                       
+                        # Calculate stability metrics with additional noise
+                        brain_signal = signals[DOMAIN_CONFIG['BRAIN']['index']]
+                       
+                        # Add measurement noise to signal
+                        measurement_noise = np.random.normal(0, noise_level, len(brain_signal))
+                        brain_signal_noisy = brain_signal + measurement_noise
+                       
+                        # Metric 1: Signal persistence (variance despite noise)
+                        signal_persistence = np.var(brain_signal_noisy)
+                       
+                        # Metric 2: Noise resilience (robust SNR, tied to TDC fidelity)
+                        signal_mean = np.mean(brain_signal_noisy)
+                        signal_noise = np.std(brain_signal_noisy - signal_mean)
+                        noise_resilience = signal_mean / (signal_noise + 1e-6) if signal_noise > 0 else 0
+                       
+                        # Metric 3: Temporal coherence (autocorrelation)
+                        autocorr = np.correlate(brain_signal_noisy, brain_signal_noisy, mode='full')
+                        autocorr = autocorr[len(autocorr)//2:]
+                        temporal_coherence = np.mean(autocorr[:10]) / autocorr[0] if autocorr[0] > 0 else 0
+                       
+                        # Combined stability score (grounded in TDC: persistence ~ Dr osc, resilience ~ SNR/fidelity)
+                        stability_score = (signal_persistence *
+                                         noise_resilience *
+                                         temporal_coherence)
+                        stability_scores.append(stability_score)
+                       
+                    except Exception as e:
+                        stability_scores.append(0)  # Unstable trial
+               
+                # Use median for robustness to outliers
+                if stability_scores:
+                    stability_map[j, k] = np.median(stability_scores)
+                    reliability_map[j, k] = np.mean([1 if score > 0.1 else 0 for score in stability_scores])
+                else:
+                    stability_map[j, k] = 0
+                    reliability_map[j, k] = 0
+               
+        # Plot stability map
+        im = axes[i].imshow(stability_map, extent=[Dr_range[0], Dr_range[-1], S_range[0], S_range[-1]],
+                          origin='lower', aspect='auto', cmap='RdYlGn', vmin=0, vmax=np.max(stability_map))
+        axes[i].set_xlabel('Drift Ratio (Dr)')
+        axes[i].set_ylabel('Entropy (S)')
+        axes[i].set_title(f'Noise Level: {noise_level}\n(Reliability: {np.mean(reliability_map):.1%})')
+       
+        # Add contour lines for stability boundaries
+        contour_levels = np.linspace(0, np.max(stability_map), 5)
+        CS = axes[i].contour(Dr_range, S_range, stability_map, levels=contour_levels, colors='black', linewidths=0.5)
+        axes[i].clabel(CS, inline=True, fontsize=8)
+       
+        plt.colorbar(im, ax=axes[i], label='Stability Score')
+   
+    plt.suptitle('TDC Phase Diagrams: True stability under stochastic noise conditions', fontsize=14)
+    plt.tight_layout()
+   
+    # Save phase diagram
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    fname = f"tdc_phase_diagram_stochastic_{timestamp}"
+    plt.savefig(f"{fname}.pdf", dpi=300, bbox_inches='tight')
+    plt.savefig(f"{fname}.png", dpi=300)
+    plt.close()
+   
+    # Export maps for further analysis
+    np.savez(f"{fname}_data.npz",
+             S_range=S_range,
+             Dr_range=Dr_range,
+             stability_map=stability_map,
+             reliability_map=reliability_map)
+   
+    return fname
+def analyze_hop_regimes():
+    """
+    Analyse different hopping regimes based on S vs Dr parameters.
+    Identifies regions for:
+    - Direct propagation (low S, moderate Dr)
+    - Hopping regimes (high S, high Dr)
+    - Chaotic regimes (very high S)
+    - Collapsed regimes (very low Dr)
+    """
+    # Parameter ranges for phase space exploration
+    S_values = np.linspace(0.05, 0.5, 15) # Entropy range
+    Dr_values = np.linspace(0.5, 8.0, 15) # Drift ratio range
+   
+    print("Generating stochastic phase diagrams for hop regime analysis...")
+    print(f"Using {5} Monte Carlo trials per parameter point")
+   
+    # Generate phase diagrams for different noise conditions
+    phase_plot_file = generate_phase_diagram(S_values, Dr_values, n_monte_carlo=5)
+   
+    print(f"Stochastic phase diagrams saved: {phase_plot_file}.pdf/png")
+   
+    # Test specific regimes with stochastic analysis
+    regimes = {
+        'direct_propagation': {'S': 0.1, 'Dr': 2.0},
+        'hopping_regime': {'S': 0.3, 'Dr': 6.0},
+        'chaotic_regime': {'S': 0.45, 'Dr': 3.0},
+        'collapsed_regime': {'S': 0.1, 'Dr': 0.5}
+    }
+   
+    print("\n=== Stochastic hop regime analysis ===")
+    for regime_name, params in regimes.items():
+        # Test each regime with multiple stochastic trials
+        stability_scores = []
+        for trial in range(10):
+            try:
+                # Add noise to test robustness
+                S_noisy = params['S'] * np.random.lognormal(0, 0.2)
+                Dr_noisy = params['Dr'] * np.random.lognormal(0, 0.15)
+               
+                # Quick simulation to test regime stability
+                t_test = np.linspace(0, 3600, 1000)  # 1 hour for bacterial scales
+                signals, _ = propagate_signal(
+                    t_test,
+                    tdc_domain,
+                    {
+                        'Dr': {'GUT': Dr_noisy, 'BLOOD': Dr_noisy, 'BRAIN': Dr_noisy},
+                        'S': {'GUT': S_noisy, 'BLOOD': S_noisy, 'BRAIN': S_noisy},
+                        'I': {'GUT': 1.0, 'BLOOD': 1.0, 'BRAIN': 1.0},
+                        'r0': {'GUT': 0.3, 'BLOOD': 0.3, 'BRAIN': 0.3},
+                        'alpha': {'GUT': 0.01, 'BLOOD': 0.01, 'BRAIN': 0.01}
+                    },
+                    T=310
+                )
+               
+                brain_signal = signals[DOMAIN_CONFIG['BRAIN']['index']]
+                stability = np.var(brain_signal) / (np.std(brain_signal) + 1e-6)
+                stability_scores.append(stability)
+               
+            except:
+                stability_scores.append(0)
+       
+        success_rate = np.mean([1 if s > 0.1 else 0 for s in stability_scores])
+        avg_stability = np.mean(stability_scores)
+       
+        print(f"\n{regime_name.upper()}:")
+        print(f" S={params['S']}, Dr={params['Dr']}")
+        print(f" Success rate: {success_rate:.1%}")
+        print(f" Avg stability: {avg_stability:.3f}")
+        print(f" Robustness: {'HIGH' if success_rate > 0.8 else 'MEDIUM' if success_rate > 0.5 else 'LOW'}")
+   
+    return regimes"
+
+# ==================================================================
 # TDC core model
 # ==================================================================
 
@@ -333,7 +533,7 @@ def generate_propagation_plot(
     model_name: str
 ) -> str:
     """
-    Generate domain propagation plot.
+    Generate a domain propagation plot.
     """
     fig, axs = plt.subplots(len(DOMAIN_NAMES), 1, figsize=(12, 10), sharex=True)
     
