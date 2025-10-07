@@ -622,6 +622,15 @@ if __name__ == "__main__":
         print(f"  37°C: HH={snr_hh[idx]:.1f}dB, TDC={snr_tdc[idx]:.1f}dB → Δ={snr_tdc[idx]-snr_hh[idx]:.1f}dB")
         print(f"  50°C: HH={snr_hh_hot[idx]:.1f}dB, TDC={snr_tdc_hot[idx]:.1f}dB → Δ={snr_tdc_hot[idx]-snr_hh_hot[idx]:.1f}dB")
 
+    # ==================================================================    
+    # Phase diagram analysis
+    # ==================================================================
+    print("\n=== PHASE DIAGRAM ANALYSIS ===")
+    regimes = analyze_hop_regimes()
+    
+    # Add regime information to validation
+    print(f"\nIdentified {len(regimes)} distinct hopping regimes")
+
     # Validate and generate plots
     validation_passed = run_validation(
         snr_hh, snr_tdc, 
