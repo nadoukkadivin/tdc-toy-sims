@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attention Beams</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1a3e 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1000px;
+        }
+        
+        h1 {
+            color: #00d9ff;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 217, 255, 0.5);
+        }
+        
+        .subtitle {
+            color: #a0a0d0;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 0.95em;
+            font-style: italic;
+        }
+        
+        canvas {
+            display: block;
+            background: radial-gradient(ellipse at 50% 30%, rgba(30, 60, 120, 0.3) 0%, rgba(10, 14, 39, 0) 70%);
+            border: 2px solid rgba(0, 217, 255, 0.3);
+            border-radius: 10px;
+            box-shadow: 0 0 40px rgba(0, 217, 255, 0.2), inset 0 0 40px rgba(100, 200, 255, 0.1);
+        }
+        
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(26, 26, 62, 0.8);
+            border-radius: 8px;
+            border: 1px solid rgba(0, 217, 255, 0.2);
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        
+        .legend-text {
+            color: #d0d0e0;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Attention Beams</h1>
+        <p class="subtitle">Substrate-Agnostic Routing at Energetic Interfaces</p>
+        <canvas id="canvas"></canvas>
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: #FF1493;"></div>
+                <div class="legend-text">Energetic Interface</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #00FF88;"></div>
+                <div class="legend-text">Attention Beam Path</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #00D9FF;"></div>
+                <div class="legend-text">Information Carrier (Ion/Photon/Electron)</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #FFD700;"></div>
+                <div class="legend-text">Residue Memory (Phosphorylation)</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = canvas.offsetWidth;
+        canvas.height = 600;
+        
+        let time = 0;
+        const particles = [];
+        const interfaces = [];
+        const beamPoints = [];
+        
+        // Create energetic interfaces
+        for (let i = 0; i < 5; i++) {
+            interfaces.push({
+                x: (i + 1) * (canvas.width / 6),
+                y: 100 + Math.sin(i) * 50,
+                radius: 40,
+                energy: 0.5 + Math.sin(i * 0.7) * 0.3,
+                residues: []
+            });
+        }
+        
+        // Initialize residues at interfaces
+        interfaces.forEach(iface => {
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2;
+                iface.residues.push({
+                    x: iface.x + Math.cos(angle) * iface.radius * 0.7,
+                    y: iface.y + Math.sin(angle) * iface.radius * 0.7,
+                    charge: Math.random() > 0.5 ? 1 : -1,
+                    active: Math.random() > 0.4
+                });
+            }
+        });
+        
+        // Create beam particles
+        for (let i = 0; i < 40; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                vx: (Math.random() - 0.5) * 2,
+                vy: (Math.random() - 0.5) * 2,
+                life: Math.random(),
+                phase: Math.random() * Math.PI * 2,
+                carrier: ['ion', 'photon', 'electron'][Math.floor(Math.random() * 3)]
+            });
+        }
+        
+        function drawInterface(iface) {
+            // Draw membrane/interface boundary
+            ctx.strokeStyle = `rgba(255, 20, 147, ${0.4 + Math.sin(time * 0.02) * 0.2})`;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(iface.x, iface.y, iface.radius, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            // Draw inner glow
+            const gradient = ctx.createRadialGradient(iface.x, iface.y, 0, iface.x, iface.y, iface.radius);
+            gradient.addColorStop(0, `rgba(255, 20, 147, ${0.1 + iface.energy * 0.1})`);
+            gradient.addColorStop(1, 'rgba(255, 20, 147, 0)');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(iface.x, iface.y, iface.radius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw residues (phosphorylation states)
+            iface.residues.forEach(residue => {
+                const brightness = residue.active ? 1 : 0.4;
+                ctx.fillStyle = `rgba(255, 215, 0, ${brightness * 0.7})`;
+                ctx.beginPath();
+                ctx.arc(residue.x, residue.y, 4 + (residue.active ? 2 : 0), 0, Math.PI * 2);
+                ctx.fill();
+                
+                if (residue.active) {
+                    ctx.strokeStyle = `rgba(255, 215, 0, ${0.3})`;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.arc(residue.x, residue.y, 8 + Math.sin(time * 0.05) * 2, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+            });
+        }
+        
+        function updateAndDrawParticles() {
+            particles.forEach((p, idx) => {
+                // Attraction to nearby interfaces
+                interfaces.forEach(iface => {
+                    const dx = iface.x - p.x;
+                    const dy = iface.y - p.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < 200) {
+                        const force = (1 - dist / 200) * 0.5;
+                        p.vx += (dx / dist) * force * 0.1;
+                        p.vy += (dy / dist) * force * 0.1;
+                    }
+                });
+                
+                // Add entropy (random exploration)
+                p.vx += (Math.random() - 0.5) * 0.2;
+                p.vy += (Math.random() - 0.5) * 0.2;
+                
+                // Inertia (friction)
+                p.vx *= 0.95;
+                p.vy *= 0.95;
+                
+                // Update position
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life += 0.002;
+                p.phase += 0.05;
+                
+                // Wrap around
+                if (p.x < 0) p.x = canvas.width;
+                if (p.x > canvas.width) p.x = 0;
+                if (p.y < 0) p.y = canvas.height;
+                if (p.y > canvas.height) p.y = 0;
+                
+                // Draw particle
+                const colorMap = {
+                    'ion': 'rgba(0, 255, 136, ',
+                    'photon': 'rgba(0, 217, 255, ',
+                    'electron': 'rgba(100, 200, 255, '
+                };
+                const baseColor = colorMap[p.carrier] || 'rgba(0, 255, 136, ';
+                const alpha = Math.sin(p.phase) * 0.3 + 0.4;
+                
+                ctx.fillStyle = baseColor + alpha + ')';
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Trail
+                ctx.strokeStyle = baseColor + (alpha * 0.3) + ')';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(p.x, p.y);
+                ctx.lineTo(p.x - p.vx * 5, p.y - p.vy * 5);
+                ctx.stroke();
+            });
+        }
+        
+        function drawBeams() {
+            // Draw connecting pathways between interfaces
+            for (let i = 0; i < interfaces.length - 1; i++) {
+                const start = interfaces[i];
+                const end = interfaces[i + 1];
+                
+                const dx = end.x - start.x;
+                const dy = end.y - start.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                const wave = Math.sin(time * 0.03 - dist * 0.01) * 0.3 + 0.5;
+                
+                const gradient = ctx.createLinearGradient(start.x, start.y, end.x, end.y);
+                gradient.addColorStop(0, `rgba(0, 255, 136, ${wave * 0.4})`);
+                gradient.addColorStop(0.5, `rgba(0, 217, 255, ${wave * 0.6})`);
+                gradient.addColorStop(1, `rgba(100, 200, 255, ${wave * 0.4})`);
+                
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = 2 + wave * 2;
+                ctx.beginPath();
+                ctx.moveTo(start.x, start.y);
+                
+                // Create wavy path
+                const steps = 50;
+                for (let j = 0; j <= steps; j++) {
+                    const t = j / steps;
+                    const px = start.x + dx * t;
+                    const py = start.y + dy * t + Math.sin(t * Math.PI * 4 + time * 0.02) * 15;
+                    if (j === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+            }
+        }
+        
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw background grid
+            ctx.strokeStyle = 'rgba(0, 217, 255, 0.05)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < canvas.width; i += 50) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, canvas.height);
+                ctx.stroke();
+            }
+            
+            drawBeams();
+            interfaces.forEach(drawInterface);
+            updateAndDrawParticles();
+            
+            // Update time
+            time++;
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+    </script>
+</body>
+</html>
