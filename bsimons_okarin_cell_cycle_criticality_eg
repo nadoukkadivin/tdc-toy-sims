@@ -1,0 +1,110 @@
+"""
+
+Conceptual TDC mapping for “cell cycle criticality” – how measured/estimated biological parameters could be used to compute the Dr index for individual cell fate prediction.
+
+"""
+
+def predict_cell_fate_from_TDC(cell_state, mitogen_signal):
+
+    """
+
+    Predicts G1-S transition outcome using TDC's Dr index.
+
+    Parameters
+
+    ----------
+
+    cell_state : object
+
+        Contains cell-specific parameters (conceptual).
+
+        e.g. chromatin accessibility, receptor levels, division history.
+
+    mitogen_signal : object
+
+        Contains signal properties (amplitude, duration).   
+
+    Returns
+
+    -------
+
+    fate : str
+
+        Predicted fate decision.
+
+    Dr : float
+
+        Computed decay-coupling ratio.
+
+    """   
+
+    # 1. Estimate persistence time of the 'commitment state' (slow domain)
+
+    #    Proxy: chromatin remodeling timescale or metabolic steady-state.
+
+    tau_decay = estimate_epigenetic_persistence(
+
+        cell_state.histone_modification_halflife,
+
+        cell_state.metabolic_oscillation_period
+
+    )
+
+    
+    # 2. Estimate integration time for mitogenic signals (fast domain)
+
+    #    Proxy: signaling pathway activation kinetics.
+
+    tau_coupling = estimate_signal_integration_window(
+
+        mitogen_signal.amplitude,
+
+        cell_state.egf_receptor_activity,
+
+        cell_state.mapk_activation_rate
+
+    )
+
+    
+    # 3. Compute the critical index
+
+    Dr = tau_decay / tau_coupling
+
+
+    # 4. Fate prediction based on Dr proximity to criticality (Dr=1)
+
+    fate = None
+
+    if 0.9 <= Dr <= 1.1:  # Critical region - high sensitivity
+
+        # Stochastic routing influenced by history (residues) & noise
+
+        if cell_state.division_history.residues > threshold:
+
+            fate = "bias_toward_self_renewal"
+
+        else:
+
+            fate = "bias_toward_differentiation"
+
+        # Fate is "poised" and highly responsive to niche signals
+
+    elif Dr < 0.9:
+
+        # Fast coupling dominates -> rapid commitment
+
+        fate = "differentiation_primed"
+
+    else:  # Dr > 1.1
+
+        # Slow decay dominates -> state persists
+
+        fate = "self_renewal_primed"
+
+    return fate, Dr
+
+# This framework makes testable predictions:
+
+# 1. Mutants (e.g. cyclin overexpressors) will have altered tau_coupling -> Dr != 1.
+# 2. Population feedback adjusts average tau_decay (via residues) to maintain Dr ~1.
+# 3. Therapeutic perturbations can widen the Dr gap between wild-type and mutant cells.
